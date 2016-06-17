@@ -57,7 +57,7 @@ type layerEnvelope struct {
 }
 
 func NewClair(url string) Clair {
-	if !strings.HasPrefix(url, "http://") {
+	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 		url = fmt.Sprintf("http://%s", url)
 	}
 	if strings.LastIndex(url, ":") < 5 {
