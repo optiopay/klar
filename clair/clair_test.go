@@ -76,7 +76,7 @@ func TestAnalyse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Analyse failed: %s", err.Error())
 	}
-	if len(*vs) != 2 {
-		t.Fatalf("Expected 2 vulnerabilities, got %d", len(*vs))
+	if len(vs) != 2 {
+		t.Fatalf("Expected 2 vulnerabilities, got %d", len(vs))
 	}
 }

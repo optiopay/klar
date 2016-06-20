@@ -9,6 +9,9 @@ import (
 	"github.com/optiopay/klar/docker"
 )
 
+var priorities = []string{"Unknown", "Negligible", "Low", "Medium", "High", "Critical", "Defcon1"}
+var store = make(map[string][]clair.Vulnerability)
+
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Printf("Image name must be provided")
@@ -46,15 +49,45 @@ func main() {
 
 	c := clair.NewClair(clairAddr)
 	vs, err := c.Analyse(image)
-	highSevs := make([]clair.Vulnerability, 0)
-	for _, v := range *vs {
-		if v.Severity == "High" {
-			highSevs = append(highSevs, v)
+	groupBySeverity(vs)
+	fmt.Printf("Found %d vulnerabilities \n", len(vs))
+	highSevNumber := len(store["High"]) + len(store["Critical"]) + len(store["Defcon1"])
+
+	iteratePriorities(func(sev string) {
+		for _, v := range store[sev] {
+			fmt.Printf("%s: [%s] \n%s\n%s\n", v.Name, v.Severity, v.Description, v.Link)
+			fmt.Println("-----------------------------------------")
+		}
+	})
+	iteratePriorities(func(sev string) { fmt.Printf("%s: %d\n", sev, len(store[sev])) })
+
+	if highSevNumber > threshold {
+		os.Exit(1)
+	}
+}
+
+func iteratePriorities(f func(sev string)) {
+	for _, sev := range priorities {
+		if len(store[sev]) != 0 {
+			f(sev)
 		}
 	}
-	fmt.Printf("Found %d vulnerabilities \n", len(*vs))
-	fmt.Printf("High severity: %d\n", len(highSevs))
-	if len(highSevs) > threshold {
-		os.Exit(1)
+
+}
+
+func groupBySeverity(vs []clair.Vulnerability) {
+	for _, v := range vs {
+		sevRow := vulnsBy(v.Severity, store)
+		store[v.Severity] = append(sevRow, v)
+	}
+}
+
+func vulnsBy(sev string, store map[string][]clair.Vulnerability) []clair.Vulnerability {
+	if items, found := store[sev]; !found {
+		row := make([]clair.Vulnerability, 0)
+		store[sev] = row
+		return row
+	} else {
+		return items
 	}
 }

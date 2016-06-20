@@ -79,7 +79,7 @@ func newLayer(image *docker.Image, index int) *layer {
 	}
 }
 
-func (c *Clair) Analyse(image *docker.Image) (*[]Vulnerability, error) {
+func (c *Clair) Analyse(image *docker.Image) ([]Vulnerability, error) {
 	vs := make([]Vulnerability, 0)
 	for i := range image.FsLayers {
 		layer := newLayer(image, i)
@@ -95,7 +95,7 @@ func (c *Clair) Analyse(image *docker.Image) (*[]Vulnerability, error) {
 			vs = append(vs, *lvs...)
 		}
 	}
-	return &vs, nil
+	return vs, nil
 }
 
 func (c *Clair) analyzeLayer(layer *layer) (*[]Vulnerability, error) {
