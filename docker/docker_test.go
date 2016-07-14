@@ -9,19 +9,53 @@ import (
 )
 
 func TestNewImage(t *testing.T) {
-	image, err := NewImage("docker-registry.optiopay.com/nginx:1b29e1531c")
-	if err != nil {
-		t.Fatalf("Can't parse qname: %s", err)
+	tcs := map[string]struct {
+		image    string
+		registry string
+		name     string
+		tag      string
+	}{
+		"full": {
+			image:    "docker-registry.optiopay.com/nginx:1b29e1531c",
+			registry: "https://docker-registry.optiopay.com/v2",
+			name:     "nginx",
+			tag:      "1b29e1531c",
+		},
+		"no_tag": {
+			image:    "docker-registry.optiopay.com/nginx",
+			registry: "https://docker-registry.optiopay.com/v2",
+			name:     "nginx",
+			tag:      "latest",
+		},
+		"no_registry": {
+			image:    "skynetservices/skydns:2.3",
+			registry: "https://registry-1.docker.io/v2",
+			name:     "skynetservices/skydns",
+			tag:      "2.3",
+		},
+		"no_registry_root": {
+			image:    "postgres:9.5.1",
+			registry: "https://registry-1.docker.io/v2",
+			name:     "library/postgres",
+			tag:      "9.5.1",
+		},
 	}
-	if image.Registry != "https://docker-registry.optiopay.com/v2" {
-		t.Fatalf("Incorrect registry name %s", image.Registry)
+	for name, tc := range tcs {
+		image, err := NewImage(tc.image, "", "")
+		if err != nil {
+			t.Fatalf("%s: Can't parse image name: %s", name, err)
+		}
+		if image.Registry != tc.registry {
+			t.Fatalf("%s: Expected registry name %s, got %s", name, tc.registry, image.Registry)
+		}
+		if image.Name != tc.name {
+			t.Fatalf("%s: Expected image name %s, got %s", name, tc.name, image.Name)
+		}
+		if image.Tag != tc.tag {
+			t.Fatalf("%s: Expected image tag %s, got %s", name, tc.tag, image.Tag)
+		}
 	}
-	if image.Name != "nginx" {
-		t.Fatalf("Incorrect image name %s", image.Name)
-	}
-	if image.Tag != "1b29e1531c" {
-		t.Fatalf("Incorrect image tag %s", image.Tag)
-	}
+
 }
 
 func TestPull(t *testing.T) {
@@ -34,7 +68,7 @@ func TestPull(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	image, err := NewImage("docker-registry.optiopay.com/nginx:1b29e1531c")
+	image, err := NewImage("docker-registry.optiopay.com/nginx:1b29e1531c", "", "")
 	image.Registry = ts.URL
 	err = image.Pull()
 	if err != nil {

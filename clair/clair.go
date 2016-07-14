@@ -12,6 +12,7 @@ import (
 	"github.com/optiopay/klar/docker"
 )
 
+// Clair is representation of Clair server
 type Clair struct {
 	url string
 }
@@ -21,7 +22,12 @@ type layer struct {
 	Path       string
 	ParentName string
 	Format     string
-	Features   []feature `json:"Features"`
+	Features   []feature
+	Headers    headers
+}
+
+type headers struct {
+	Authorization string
 }
 
 type feature struct {
@@ -32,6 +38,7 @@ type feature struct {
 	AddedBy         string          `json:"AddedBy,omitempty"`
 }
 
+// Vulnerability represents vulnerability entity returned by Clair
 type Vulnerability struct {
 	Name          string                 `json:"Name,omitempty"`
 	NamespaceName string                 `json:"NamespaceName,omitempty"`
@@ -56,6 +63,8 @@ type layerEnvelope struct {
 	Error *clairError `json:"Error,omitempty"`
 }
 
+// NewClair construct Clair entity using potentially incomplete server URL
+// If protocol is missing HTTP will be used. If port is missing 6060 will be used
 func NewClair(url string) Clair {
 	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 		url = fmt.Sprintf("http://%s", url)
@@ -76,11 +85,14 @@ func newLayer(image *docker.Image, index int) *layer {
 		Path:       strings.Join([]string{image.Registry, image.Name, "blobs", image.FsLayers[index].BlobSum}, "/"),
 		ParentName: parentName,
 		Format:     "Docker",
+		Headers:    headers{image.Token},
 	}
 }
 
-func (c *Clair) Analyse(image *docker.Image) ([]Vulnerability, error) {
-	vs := make([]Vulnerability, 0)
+// Analyse sent each layer from Docker image to Clair and returns
+// a list of found vulnerabilities
+func (c *Clair) Analyse(image *docker.Image) []Vulnerability {
+	var vs []Vulnerability
 	for i := range image.FsLayers {
 		layer := newLayer(image, i)
 		err := c.pushLayer(layer)
@@ -95,7 +107,7 @@ func (c *Clair) Analyse(image *docker.Image) ([]Vulnerability, error) {
 			vs = append(vs, *lvs...)
 		}
 	}
-	return vs, nil
+	return vs
 }
 
 func (c *Clair) analyzeLayer(layer *layer) (*[]Vulnerability, error) {
@@ -113,7 +125,7 @@ func (c *Clair) analyzeLayer(layer *layer) (*[]Vulnerability, error) {
 	if err = json.NewDecoder(response.Body).Decode(&envelope); err != nil {
 		return nil, err
 	}
-	vs := make([]Vulnerability, 0)
+	var vs []Vulnerability
 	for _, f := range envelope.Layer.Features {
 		for _, v := range f.Vulnerabilities {
 			vs = append(vs, v)

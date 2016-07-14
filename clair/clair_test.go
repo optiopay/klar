@@ -16,10 +16,11 @@ const (
 	imageTag      = "image-tag"
 	imageRegistry = "https://image-registry"
 	layerHash     = "blob1"
+	imageToken    = "token"
 )
 
-func TestAnalyse(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func clairServerhandler(t *testing.T) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		responseFile := "testdata/clair-get"
 
@@ -34,6 +35,11 @@ func TestAnalyse(t *testing.T) {
 				http.Error(w, `{"message": "layer name"}`, http.StatusBadRequest)
 				return
 			}
+			if layer.Headers.Authorization != imageToken {
+				http.Error(w, `{"message": "image token"}`, http.StatusBadRequest)
+				return
+			}
+
 			if layer.Path != fmt.Sprintf("%s/%s/blobs/%s", imageRegistry, imageName, layerHash) {
 				http.Error(w, `{"message": "layer path"}`, http.StatusBadRequest)
 				return
@@ -57,8 +63,11 @@ func TestAnalyse(t *testing.T) {
 			t.Fatalf("Can't load clair test response %s", err.Error())
 		}
 		fmt.Fprintln(w, string(resp))
-	}))
+	})
+}
 
+func TestAnalyse(t *testing.T) {
+	ts := httptest.NewServer(clairServerhandler(t))
 	defer ts.Close()
 
 	dockerImage := &docker.Image{
@@ -66,16 +75,14 @@ func TestAnalyse(t *testing.T) {
 		Name:     imageName,
 		Tag:      imageTag,
 		FsLayers: []docker.FsLayer{
-			docker.FsLayer{layerHash},
-			docker.FsLayer{layerHash},
+			{layerHash},
+			{layerHash},
 		},
+		Token: imageToken,
 	}
 
 	c := NewClair(ts.URL)
-	vs, err := c.Analyse(dockerImage)
-	if err != nil {
-		t.Fatalf("Analyse failed: %s", err.Error())
-	}
+	vs := c.Analyse(dockerImage)
 	if len(vs) != 2 {
 		t.Fatalf("Expected 2 vulnerabilities, got %d", len(vs))
 	}

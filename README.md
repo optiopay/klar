@@ -1,20 +1,65 @@
 # Klar
 Integration of Clair and Docker Registry
 
-Kalr is a simple tool to analyze images stored in a private Docker registry for security vulnerabilities using Clair https://github.com/coreos/clair. The current version doesn't support Registry authorization. Klar is designed to be used as an integration tool so it relies on enviroment variables.
+Klar is a simple tool to analyze images stored in a private or public  Docker registry for security vulnerabilities using Clair https://github.com/coreos/clair. Klar is designed to be used as an integration tool so it relies on enviroment variables. It's a single binary which requires no dependencies.
 
-Klar returns 0 if number of found high severity vulnerabilities in an image is less or equals than threshold (see below), otherwise it returns 1. 
+## Installation
 
-Env vars:
-* `CLAIR_ADDR` - address of Clair server, the most complete form is `http://host:port`
+Make sure you have Go language compiler installed and configured https://golang.org/doc/install
+
+If your Go binary folder is in your `PATH` (e.g. `export PATH=$PATH:/usr/local/go/bin`) you may want to:
+
+    go install .
+
+Otherwise you can just build it in the project folder
+
+    go build .
+
+And copy `klar` binary to a folder in your `PATH`.
+
+
+## Usage
+
+Klar process returns `0` if number of detected high severity vulnerabilities in an image is less or equals than threshold (see below), otherwise it returns `1`.
+
+Klar can be configured via the following environment variables:
+
+* `CLAIR_ADDR` - address of Clair server, the most complete form is `protocol://host:port`
 protocol and port may be omited, `http` and `6060` are used by default
 
-* `CLAIR_THREHOLD` - how many high severity vulnerabilities Klar can tolerate. Default is 0
+* `CLAIR_THRESHOLD` - how many high severity vulnerabilities Klar can tolerate before returning `1`. Default is 0.
 
-* `HTTPS_REGISTRY` - [yes|no] if the value is yes Klar will use HTTPS and port 443 to contact a Registry, otherwise HTTP and port 5000 is used. Defualt is yes.
+* `DOCKER_USER` - Docker registry account name
+
+* `DOCKER_PASSWORD` - Docker registry account password
 
 Usage:
 
-    CLAIR_ADDR=http://localhost CLAIR_THRESHOLD=10 ./klar docker-registry.optiopay.com/logstash:47c9e4e2e7
+    CLAIR_ADDR=http://localhost CLAIR_THRESHOLD=10 DOCKER_USER=me DOCKER_PASSWORD=secret klar postgres:9.5.1
+
+## Dockerized version
+
+Klar can be dockerized. Build Klar in project root first:
+
+    go build .
+
+If you are on Mac don't forget to build it for Linux:
+
+    GOOS=linux go build .
+
+To build Docker image run in the project root (replace `klar` with fully qualified name if you like):
+   
+    docker build -t klar .
+
+Then create an env file or pass env vars as separate ``--env` arguments. For example save it as `my-klar.env`
+    
+    CLAIR_ADDR=http://localhost
+    CLAIR_THRESHOLD=10
+    DOCKER_USER=me
+    DOCKER_PASSWORD=secret
+
+Then run
+
+    docker run --env-file=my-klar-env klar postgres:9.5.1
 
 

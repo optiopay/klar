@@ -29,7 +29,10 @@ func main() {
 		threshold, _ = strconv.Atoi(thresholdStr)
 	}
 
-	image, err := docker.NewImage(os.Args[1])
+	dockerUser := os.Getenv("DOCKER_USER")
+	dockerPassword := os.Getenv("DOCKER_PASSWORD")
+
+	image, err := docker.NewImage(os.Args[1], dockerUser, dockerPassword)
 	if err != nil {
 		fmt.Printf("Can't parse qname: %s", err)
 		os.Exit(1)
@@ -48,7 +51,7 @@ func main() {
 	}
 
 	c := clair.NewClair(clairAddr)
-	vs, err := c.Analyse(image)
+	vs := c.Analyse(image)
 	groupBySeverity(vs)
 	fmt.Printf("Found %d vulnerabilities \n", len(vs))
 	highSevNumber := len(store["High"]) + len(store["Critical"]) + len(store["Defcon1"])
@@ -83,11 +86,10 @@ func groupBySeverity(vs []clair.Vulnerability) {
 }
 
 func vulnsBy(sev string, store map[string][]clair.Vulnerability) []clair.Vulnerability {
-	if items, found := store[sev]; !found {
-		row := make([]clair.Vulnerability, 0)
-		store[sev] = row
-		return row
-	} else {
-		return items
+	items, found := store[sev]
+	if !found {
+		items = make([]clair.Vulnerability, 0)
+		store[sev] = items
 	}
+	return items
 }
