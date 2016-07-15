@@ -3,19 +3,19 @@ Integration of Clair and Docker Registry
 
 Klar is a simple tool to analyze images stored in a private or public  Docker registry for security vulnerabilities using Clair https://github.com/coreos/clair. Klar is designed to be used as an integration tool so it relies on enviroment variables. It's a single binary which requires no dependencies.
 
-## Installation
+## Binary installation
+
+The simples way is to download the latest relase (for OSX and Linux) from https://github.com/optiopay/klar/releases/ and put the binary in a folder in your `PATH`, make sure it has execute permission
+
+## Installation from source code
 
 Make sure you have Go language compiler installed and configured https://golang.org/doc/install
 
-If your Go binary folder is in your `PATH` (e.g. `export PATH=$PATH:/usr/local/go/bin`) you may want to:
+Then run
 
-    go install .
+    go get github.com/optiopay/klar
 
-Otherwise you can just build it in the project folder
-
-    go build .
-
-And copy `klar` binary to a folder in your `PATH`.
+make sure your Go binary folder is in your `PATH` (e.g. `export PATH=$PATH:/usr/local/go/bin`)
 
 
 ## Usage
@@ -39,7 +39,7 @@ Usage:
 
 ## Dockerized version
 
-Klar can be dockerized. Build Klar in project root first:
+Klar can be dockerized. Go to `$GOPATH/src/github.com/optiopay/klar` and build Klar in project root:
 
     go build .
 
