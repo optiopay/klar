@@ -20,7 +20,8 @@ func main() {
 
 	clairAddr := os.Getenv("CLAIR_ADDR")
 	if clairAddr == "" {
-		clairAddr = "https://clair-staging.optiopay.com"
+		fmt.Printf("Clair address must be provided")
+		os.Exit(1)
 	}
 
 	threshold := 0
