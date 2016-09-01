@@ -16,17 +16,30 @@ func TestNewImage(t *testing.T) {
 		tag      string
 	}{
 		"full": {
-			image:    "docker-registry.optiopay.com/nginx:1b29e1531c",
-			registry: "https://docker-registry.optiopay.com/v2",
+			image:    "docker-registry.domain.com:8080/nginx:1b29e1531c",
+			registry: "https://docker-registry.domain.com:8080/v2",
+			name:     "nginx",
+			tag:      "1b29e1531c",
+		},
+		"regular": {
+			image:    "docker-registry.domain.com/nginx:1b29e1531c",
+			registry: "https://docker-registry.domain.com/v2",
 			name:     "nginx",
 			tag:      "1b29e1531c",
 		},
 		"no_tag": {
-			image:    "docker-registry.optiopay.com/nginx",
-			registry: "https://docker-registry.optiopay.com/v2",
+			image:    "docker-registry.domain.com/nginx",
+			registry: "https://docker-registry.domain.com/v2",
 			name:     "nginx",
 			tag:      "latest",
 		},
+		"no_tag_with_port": {
+			image:    "docker-registry.domain.com:8080/nginx",
+			registry: "https://docker-registry.domain.com:8080/v2",
+			name:     "nginx",
+			tag:      "latest",
+		},
+
 		"no_registry": {
 			image:    "skynetservices/skydns:2.3",
 			registry: "https://registry-1.docker.io/v2",
@@ -68,7 +81,7 @@ func TestPull(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	image, err := NewImage("docker-registry.optiopay.com/nginx:1b29e1531c", "", "")
+	image, err := NewImage("docker-registry.domain.com/nginx:1b29e1531c", "", "")
 	image.Registry = ts.URL
 	err = image.Pull()
 	if err != nil {

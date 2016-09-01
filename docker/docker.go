@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -40,22 +41,37 @@ func NewImage(qname, user, password string) (*Image, error) {
 	registry := dockerHub
 	tag := "latest"
 	name := ""
+	port := ""
 
 	regIndex := strings.Index(qname, "/")
 	if regIndex != -1 {
 		regCandidate := qname[:regIndex]
+		portIndex := strings.Index(regCandidate, ":")
+		if portIndex != -1 {
+			var err error
+			port = regCandidate[portIndex+1:]
+			regCandidate = regCandidate[:portIndex]
+			_, err = strconv.Atoi(port)
+			if err != nil {
+				fmt.Printf("bad registry port value %q\n", port)
+				port = ""
+			}
+		}
 		addrs, err := net.LookupHost(regCandidate)
 		if err != nil || len(addrs) == 0 {
 			regIndex = -1
 		} else {
 			registry = regCandidate
+			if port != "" {
+				registry = fmt.Sprintf("%s:%s", registry, port)
+			}
 		}
 	}
 
-	tagIndex := strings.Index(qname, ":")
-	if tagIndex != -1 {
-		name = qname[regIndex+1 : tagIndex]
+	tagIndex := strings.LastIndex(qname, ":")
+	if tagIndex != -1 && tagIndex > regIndex {
 		tag = qname[tagIndex+1 : len(qname)]
+		name = qname[regIndex+1 : tagIndex]
 	} else {
 		name = qname[regIndex+1 : len(qname)]
 	}
