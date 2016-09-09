@@ -11,6 +11,13 @@ import (
 	"regexp"
 )
 
+const (
+	stateInitial = iota
+	stateName
+	statePort
+	stateTag
+)
+
 // Image represents Docker image
 type Image struct {
 	Registry string
@@ -38,45 +45,50 @@ var tokenRe = regexp.MustCompile(`Bearer realm="(.*?)",service="(.*?)",scope="(.
 func NewImage(qname, user, password string) (*Image, error) {
 	registry := dockerHub
 	tag := "latest"
-	name := ""
-	port := ""
-	state := "initial"
+	var name, port string
+	state := stateInitial
 	start := 0
 	for i, c := range qname {
 		if c == ':' || c == '/' || i == len(qname)-1 {
 			if i == len(qname)-1 {
+				// ignore a separator, include the last symbol
 				i += 1
 			}
 			part := qname[start:i]
 			start = i + 1
 			switch state {
-			case "initial":
+			case stateInitial:
 				addrs, err := net.LookupHost(part)
 				// not a hostname?
 				if err != nil || len(addrs) == 0 {
+					// it's an image name, if separator is /
+					// next part is also part of the name
+					// othrewise it's an offcial image
 					if c == '/' {
+						// we got just a part of name, till next time
 						start = 0
-						state = "name"
+						state = stateName
 					} else {
-						state = "tag"
+						state = stateTag
 						name = fmt.Sprintf("library/%s", part)
 					}
 				} else {
+					// it's registry, let's check what's next =port of image name
 					registry = part
 					if c == ':' {
-						state = "port"
+						state = statePort
 					} else {
-						state = "name"
+						state = stateName
 					}
 				}
-			case "tag":
+			case stateTag:
 				tag = part
-			case "port":
-				state = "name"
+			case statePort:
+				state = stateName
 				port = part
-			case "name":
+			case stateName:
 				if c == ':' {
-					state = "tag"
+					state = stateTag
 				}
 				name = part
 			}
