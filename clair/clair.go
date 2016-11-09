@@ -12,6 +12,8 @@ import (
 	"github.com/optiopay/klar/docker"
 )
 
+const EMPTY_LAYER_BLOB_SUM = "sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4"
+
 // Clair is representation of Clair server
 type Clair struct {
 	url string
@@ -77,9 +79,10 @@ func NewClair(url string) Clair {
 
 func newLayer(image *docker.Image, index int) *layer {
 	var parentName string
-	if index > 0 {
-		parentName = image.FsLayers[index-1].BlobSum
+	if index < len(image.FsLayers)-1 {
+		parentName = image.FsLayers[index+1].BlobSum
 	}
+
 	return &layer{
 		Name:       image.FsLayers[index].BlobSum,
 		Path:       strings.Join([]string{image.Registry, image.Name, "blobs", image.FsLayers[index].BlobSum}, "/"),
@@ -89,29 +92,48 @@ func newLayer(image *docker.Image, index int) *layer {
 	}
 }
 
+func filterEmptyLayers(fsLayers []docker.FsLayer) (filteredLayers []docker.FsLayer) {
+	for _, layer := range fsLayers {
+		if layer.BlobSum != EMPTY_LAYER_BLOB_SUM {
+			filteredLayers = append(filteredLayers, layer)
+		}
+	}
+	return
+}
+
 // Analyse sent each layer from Docker image to Clair and returns
 // a list of found vulnerabilities
 func (c *Clair) Analyse(image *docker.Image) []Vulnerability {
+	// Filter the empty layers in image
+	image.FsLayers = filterEmptyLayers(image.FsLayers)
+	layerLength := len(image.FsLayers)
+	if layerLength == 0 {
+		fmt.Printf("No need to analyse image %s/%s:%s as there is no non-emtpy layer",
+			image.Registry, image.Name, image.Tag)
+		return nil
+	}
+
 	var vs []Vulnerability
-	for i := range image.FsLayers {
+	for i := layerLength - 1; i >= 0; i-- {
 		layer := newLayer(image, i)
 		err := c.pushLayer(layer)
 		if err != nil {
 			fmt.Printf("Push layer %d failed: %s", i, err.Error())
 			continue
 		}
-		lvs, err := c.analyzeLayer(layer)
-		if err != nil {
-			fmt.Printf("Analyze layer %d failed: %s", i, err.Error())
-		} else {
-			vs = append(vs, *lvs...)
-		}
 	}
+
+	vs, err := c.analyzeLayer(image.FsLayers[0])
+	if err != nil {
+		fmt.Printf("Analyse image %s/%s:%s failed: %s", image.Registry, image.Name, image.Tag, err.Error())
+		return nil
+	}
+
 	return vs
 }
 
-func (c *Clair) analyzeLayer(layer *layer) (*[]Vulnerability, error) {
-	url := fmt.Sprintf("%s/v1/layers/%s?vulnerabilities", c.url, layer.Name)
+func (c *Clair) analyzeLayer(layer docker.FsLayer) ([]Vulnerability, error) {
+	url := fmt.Sprintf("%s/v1/layers/%s?vulnerabilities", c.url, layer.BlobSum)
 	response, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -131,7 +153,7 @@ func (c *Clair) analyzeLayer(layer *layer) (*[]Vulnerability, error) {
 			vs = append(vs, v)
 		}
 	}
-	return &vs, nil
+	return vs, nil
 }
 
 func (c *Clair) pushLayer(layer *layer) error {
