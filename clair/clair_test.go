@@ -12,11 +12,12 @@ import (
 )
 
 const (
-	imageName     = "test-image"
-	imageTag      = "image-tag"
-	imageRegistry = "https://image-registry"
-	layerHash     = "blob1"
-	imageToken    = "token"
+	imageName      = "test-image"
+	imageTag       = "image-tag"
+	imageRegistry  = "https://image-registry"
+	layerHash      = "blob1"
+	emptyLayerHash = "sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4"
+	imageToken     = "token"
 )
 
 func clairServerhandler(t *testing.T) http.HandlerFunc {
@@ -76,6 +77,7 @@ func TestAnalyse(t *testing.T) {
 		Tag:      imageTag,
 		FsLayers: []docker.FsLayer{
 			{layerHash},
+			{emptyLayerHash},
 			{layerHash},
 		},
 		Token: imageToken,
@@ -83,7 +85,7 @@ func TestAnalyse(t *testing.T) {
 
 	c := NewClair(ts.URL)
 	vs := c.Analyse(dockerImage)
-	if len(vs) != 2 {
-		t.Fatalf("Expected 2 vulnerabilities, got %d", len(vs))
+	if len(vs) != 1 {
+		t.Fatalf("Expected 1 vulnerability, got %d", len(vs))
 	}
 }
