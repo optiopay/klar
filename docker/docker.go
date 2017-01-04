@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"regexp"
+	"strings"
 )
 
 const (
@@ -45,6 +46,7 @@ var tokenRe = regexp.MustCompile(`Bearer realm="(.*?)",service="(.*?)",scope="(.
 func NewImage(qname, user, password string) (*Image, error) {
 	registry := dockerHub
 	tag := "latest"
+	var nameParts []string
 	var name, port string
 	state := stateInitial
 	start := 0
@@ -90,13 +92,16 @@ func NewImage(qname, user, password string) (*Image, error) {
 				if c == ':' {
 					state = stateTag
 				}
-				name = part
+				nameParts = append(nameParts, part)
 			}
 		}
 	}
 
 	if port != "" {
 		registry = fmt.Sprintf("%s:%s", registry, port)
+	}
+	if name == "" {
+		name = strings.Join(nameParts, "/")
 	}
 
 	registry = fmt.Sprintf("https://%s/v2", registry)
