@@ -190,6 +190,7 @@ func (i *Image) pullReq() (*http.Response, error) {
 	}
 	if i.Token == "" {
 		req.SetBasicAuth(i.user, i.password)
+		i.Token = req.Header.Get("Authorization")
 	} else {
 		req.Header.Set("Authorization", i.Token)
 	}
