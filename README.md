@@ -48,11 +48,11 @@ If you are on Mac don't forget to build it for Linux:
     GOOS=linux go build .
 
 To build Docker image run in the project root (replace `klar` with fully qualified name if you like):
-   
+
     docker build -t klar .
 
 Then create an env file or pass env vars as separate ``--env` arguments. For example save it as `my-klar.env`
-    
+
     CLAIR_ADDR=http://localhost
     CLAIR_THRESHOLD=10
     DOCKER_USER=me
@@ -62,4 +62,10 @@ Then run
 
     docker run --env-file=my-klar-env klar postgres:9.5.1
 
+## Amazon ECR support
+There is no permanent username/password for Amazon ECR, the credentials must be retrived using `aws ecr get-login` and they are valid for 12 hours. Here is a sample script which may be used to provide Klar with ECR credentials:
 
+    DOCKER_LOGIN=`aws ecr get-login`
+    PASSWORD=`echo $DOCKER_LOGIN | cut -d' ' -f6`
+    REGISTRY=`echo $DOCKER_LOGIN | cut -d' ' -f9 | sed "s/https:\/\///"`
+    DOCKER_USER=AWS DOCKER_PASSWORD=${PASSWORD} ./klar ${REGISTRY}/my-image
