@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/optiopay/klar/clair"
 	"github.com/optiopay/klar/docker"
@@ -22,6 +23,25 @@ func main() {
 	if clairAddr == "" {
 		fmt.Printf("Clair address must be provided")
 		os.Exit(1)
+	}
+
+	clairOutput := priorities[0]
+	outputEnv := os.Getenv("CLAIR_OUTPUT")
+	if outputEnv != "" {
+		output := strings.Title(strings.ToLower(outputEnv))
+		correct := false
+		for _, sev := range priorities {
+			if sev == output {
+				clairOutput = sev
+				correct = true
+				break
+			}
+		}
+
+		if !correct {
+			fmt.Printf("Clair output level %s is not supported, only support %v", outputEnv, priorities)
+			os.Exit(1)
+		}
 	}
 
 	threshold := 0
@@ -57,21 +77,30 @@ func main() {
 	fmt.Printf("Found %d vulnerabilities \n", len(vs))
 	highSevNumber := len(store["High"]) + len(store["Critical"]) + len(store["Defcon1"])
 
-	iteratePriorities(func(sev string) {
+	iteratePriorities(clairOutput, func(sev string) {
 		for _, v := range store[sev] {
 			fmt.Printf("%s: [%s] \n%s\n%s\n", v.Name, v.Severity, v.Description, v.Link)
 			fmt.Println("-----------------------------------------")
 		}
 	})
-	iteratePriorities(func(sev string) { fmt.Printf("%s: %d\n", sev, len(store[sev])) })
+	iteratePriorities(priorities[0], func(sev string) { fmt.Printf("%s: %d\n", sev, len(store[sev])) })
 
 	if highSevNumber > threshold {
 		os.Exit(1)
 	}
 }
 
-func iteratePriorities(f func(sev string)) {
+func iteratePriorities(output string, f func(sev string)) {
+	filtered := true
 	for _, sev := range priorities {
+		if filtered {
+			if sev != output {
+				continue
+			} else {
+				filtered = false
+			}
+		}
+
 		if len(store[sev]) != 0 {
 			f(sev)
 		}

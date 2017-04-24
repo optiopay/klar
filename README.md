@@ -27,6 +27,10 @@ Klar can be configured via the following environment variables:
 * `CLAIR_ADDR` - address of Clair server, the most complete form is `protocol://host:port`
 protocol and port may be omited, `http` and `6060` are used by default
 
+* `CLAIR_OUTPUT` - severity level threshold, vulnerabilities with severity level higher than or equal to this threshold
+will be outputed. Supported levels are `Unknown`, `Negligible`, `Low`, `Medium`, `High`, `Critical`, `Defcon1`.
+Default is `Unknown`.
+
 * `CLAIR_THRESHOLD` - how many high severity vulnerabilities Klar can tolerate before returning `1`. Default is 0.
 
 * `DOCKER_USER` - Docker registry account name
@@ -35,7 +39,7 @@ protocol and port may be omited, `http` and `6060` are used by default
 
 Usage:
 
-    CLAIR_ADDR=http://localhost CLAIR_THRESHOLD=10 DOCKER_USER=me DOCKER_PASSWORD=secret klar postgres:9.5.1
+    CLAIR_ADDR=http://localhost CLAIR_OUTPUT=High CLAIR_THRESHOLD=10 DOCKER_USER=me DOCKER_PASSWORD=secret klar postgres:9.5.1
 
 ## Dockerized version
 
@@ -54,6 +58,7 @@ To build Docker image run in the project root (replace `klar` with fully qualifi
 Then create an env file or pass env vars as separate ``--env` arguments. For example save it as `my-klar.env`
 
     CLAIR_ADDR=http://localhost
+    CLAIR_OUTPUT=High
     CLAIR_THRESHOLD=10
     DOCKER_USER=me
     DOCKER_PASSWORD=secret
