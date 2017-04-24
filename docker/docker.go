@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,7 +9,9 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"os"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -37,8 +40,20 @@ type FsLayer struct {
 
 const dockerHub = "registry-1.docker.io"
 
-var client = &http.Client{}
+var client http.Client
 var tokenRe = regexp.MustCompile(`Bearer realm="(.*?)",service="(.*?)",scope="(.*?)"`)
+
+func InitialiseClient() {
+	var insecureTLS = false
+	if envInsecure, err := strconv.ParseBool(os.Getenv("KLAR_INSECURE")); err == nil {
+		insecureTLS = envInsecure
+	}
+
+	var tr = &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureTLS},
+	}
+	client = http.Client{Transport: tr}
+}
 
 // NewImage parses image name which could be the ful name registry:port/name:tag
 // or in any other shorter forms and creates docker image entity without

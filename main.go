@@ -53,6 +53,8 @@ func main() {
 	dockerUser := os.Getenv("DOCKER_USER")
 	dockerPassword := os.Getenv("DOCKER_PASSWORD")
 
+	docker.InitialiseClient()
+
 	image, err := docker.NewImage(os.Args[1], dockerUser, dockerPassword)
 	if err != nil {
 		fmt.Printf("Can't parse qname: %s", err)
