@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -9,6 +10,11 @@ import (
 	"github.com/optiopay/klar/clair"
 	"github.com/optiopay/klar/docker"
 )
+
+type jsonOutput struct {
+	LayerCount      int
+	Vulnerabilities []clair.Vulnerability
+}
 
 var priorities = []string{"Unknown", "Negligible", "Low", "Medium", "High", "Critical", "Defcon1"}
 var store = make(map[string][]clair.Vulnerability)
@@ -68,26 +74,46 @@ func main() {
 		fmt.Printf("Can't pull image: %s", err)
 		os.Exit(1)
 	}
+
+	var useJSONOutput = false
+	if envJSONOutput, err := strconv.ParseBool(os.Getenv("JSON_OUTPUT")); err == nil {
+		useJSONOutput = envJSONOutput
+	}
+
+	var output = jsonOutput{}
+
 	if len(image.FsLayers) == 0 {
 		fmt.Printf("Can't pull fsLayers")
 		os.Exit(1)
 	} else {
-		fmt.Printf("Analysing %d layers\n", len(image.FsLayers))
+		if useJSONOutput {
+			output.LayerCount = len(image.FsLayers)
+		} else {
+			fmt.Printf("Analysing %d layers\n", len(image.FsLayers))
+		}
 	}
 
 	c := clair.NewClair(clairAddr)
 	vs := c.Analyse(image)
 	groupBySeverity(vs)
-	fmt.Printf("Found %d vulnerabilities \n", len(vs))
+	if !useJSONOutput {
+		fmt.Printf("Found %d vulnerabilities \n", len(vs))
+	}
 	highSevNumber := len(store["High"]) + len(store["Critical"]) + len(store["Defcon1"])
 
-	iteratePriorities(clairOutput, func(sev string) {
-		for _, v := range store[sev] {
-			fmt.Printf("%s: [%s] \n%s\n%s\n", v.Name, v.Severity, v.Description, v.Link)
-			fmt.Println("-----------------------------------------")
-		}
-	})
-	iteratePriorities(priorities[0], func(sev string) { fmt.Printf("%s: %d\n", sev, len(store[sev])) })
+	if useJSONOutput {
+		output.Vulnerabilities = vs
+		enc := json.NewEncoder(os.Stdout)
+		enc.Encode(output)
+	} else {
+		iteratePriorities(clairOutput, func(sev string) {
+			for _, v := range store[sev] {
+				fmt.Printf("%s: [%s] \n%s\n%s\n", v.Name, v.Severity, v.Description, v.Link)
+				fmt.Println("-----------------------------------------")
+			}
+		})
+		iteratePriorities(priorities[0], func(sev string) { fmt.Printf("%s: %d\n", sev, len(store[sev])) })
+	}
 
 	if highSevNumber > threshold {
 		os.Exit(1)
