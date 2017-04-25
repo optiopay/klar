@@ -194,6 +194,10 @@ func (i *Image) pullReq() (*http.Response, error) {
 	} else {
 		req.Header.Set("Authorization", i.Token)
 	}
+
+	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v2+json")
+	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
+
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Get error")
