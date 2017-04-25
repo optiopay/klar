@@ -45,7 +45,7 @@ var tokenRe = regexp.MustCompile(`Bearer realm="(.*?)",service="(.*?)",scope="(.
 // or in any other shorter forms and creates docker image entity without
 // information about layers
 func NewImage(qname, user, password string, insecureTLS bool) (*Image, error) {
-	var tr = &http.Transport{
+	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureTLS},
 	}
 	client := http.Client{Transport: tr}
