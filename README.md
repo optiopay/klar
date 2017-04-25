@@ -40,6 +40,8 @@ Default is `Unknown`.
 * `DOCKER_INSECURE` - Allow Klar to access registries with bad SSL certificates. Default is `false`. Clair will 
 need to be booted with `-insecure-tls` for this to work.
 
+* `JSON_OUTPUT` - Output JSON, not plain text. Default is `false`.
+
 Usage:
 
     CLAIR_ADDR=http://localhost CLAIR_OUTPUT=High CLAIR_THRESHOLD=10 DOCKER_USER=me DOCKER_PASSWORD=secret klar postgres:9.5.1
