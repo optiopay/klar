@@ -45,7 +45,7 @@ var tokenRe = regexp.MustCompile(`Bearer realm="(.*?)",service="(.*?)",scope="(.
 
 func InitialiseClient() {
 	var insecureTLS = false
-	if envInsecure, err := strconv.ParseBool(os.Getenv("KLAR_INSECURE")); err == nil {
+	if envInsecure, err := strconv.ParseBool(os.Getenv("DOCKER_INSECURE")); err == nil {
 		insecureTLS = envInsecure
 	}
 
