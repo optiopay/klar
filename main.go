@@ -58,9 +58,15 @@ func main() {
 
 	dockerUser := os.Getenv("DOCKER_USER")
 	dockerPassword := os.Getenv("DOCKER_PASSWORD")
+
 	insecureTLS := false
 	if envInsecure, err := strconv.ParseBool(os.Getenv("DOCKER_INSECURE")); err == nil {
 		insecureTLS = envInsecure
+	}
+
+	useJSONOutput := false
+	if envJSONOutput, err := strconv.ParseBool(os.Getenv("JSON_OUTPUT")); err == nil {
+		useJSONOutput = envJSONOutput
 	}
 
 	image, err := docker.NewImage(os.Args[1], dockerUser, dockerPassword, insecureTLS)
@@ -73,11 +79,6 @@ func main() {
 	if err != nil {
 		fmt.Printf("Can't pull image: %s", err)
 		os.Exit(1)
-	}
-
-	var useJSONOutput = false
-	if envJSONOutput, err := strconv.ParseBool(os.Getenv("JSON_OUTPUT")); err == nil {
-		useJSONOutput = envJSONOutput
 	}
 
 	var output = jsonOutput{}
