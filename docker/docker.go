@@ -9,9 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
-	"os"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -31,6 +29,7 @@ type Image struct {
 	Token    string
 	user     string
 	password string
+	client   http.Client
 }
 
 // FsLayer represents a layer in docker image
@@ -40,25 +39,16 @@ type FsLayer struct {
 
 const dockerHub = "registry-1.docker.io"
 
-var client http.Client
 var tokenRe = regexp.MustCompile(`Bearer realm="(.*?)",service="(.*?)",scope="(.*?)"`)
-
-func InitialiseClient() {
-	var insecureTLS = false
-	if envInsecure, err := strconv.ParseBool(os.Getenv("DOCKER_INSECURE")); err == nil {
-		insecureTLS = envInsecure
-	}
-
-	var tr = &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureTLS},
-	}
-	client = http.Client{Transport: tr}
-}
 
 // NewImage parses image name which could be the ful name registry:port/name:tag
 // or in any other shorter forms and creates docker image entity without
 // information about layers
-func NewImage(qname, user, password string) (*Image, error) {
+func NewImage(qname, user, password string, insecureTLS bool) (*Image, error) {
+	var tr = &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureTLS},
+	}
+	client := http.Client{Transport: tr}
 	registry := dockerHub
 	tag := "latest"
 	var nameParts []string
@@ -126,6 +116,7 @@ func NewImage(qname, user, password string) (*Image, error) {
 		Tag:      tag,
 		user:     user,
 		password: password,
+		client:   client,
 	}, nil
 }
 
@@ -174,7 +165,7 @@ func (i *Image) requestToken(resp *http.Response) (string, error) {
 		return "", err
 	}
 	req.SetBasicAuth(i.user, i.password)
-	tResp, err := client.Do(req)
+	tResp, err := i.client.Do(req)
 	if err != nil {
 		io.Copy(ioutil.Discard, tResp.Body)
 		return "", err
@@ -213,7 +204,7 @@ func (i *Image) pullReq() (*http.Response, error) {
 	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v2+json")
 	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
 
-	resp, err := client.Do(req)
+	resp, err := i.client.Do(req)
 	if err != nil {
 		fmt.Println("Get error")
 		return nil, err
