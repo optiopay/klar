@@ -52,8 +52,12 @@ func main() {
 
 	dockerUser := os.Getenv("DOCKER_USER")
 	dockerPassword := os.Getenv("DOCKER_PASSWORD")
+	insecureTLS := false
+	if envInsecure, err := strconv.ParseBool(os.Getenv("DOCKER_INSECURE")); err == nil {
+		insecureTLS = envInsecure
+	}
 
-	image, err := docker.NewImage(os.Args[1], dockerUser, dockerPassword)
+	image, err := docker.NewImage(os.Args[1], dockerUser, dockerPassword, insecureTLS)
 	if err != nil {
 		fmt.Printf("Can't parse qname: %s", err)
 		os.Exit(1)
