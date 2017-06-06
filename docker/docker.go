@@ -44,7 +44,7 @@ var tokenRe = regexp.MustCompile(`Bearer realm="(.*?)",service="(.*?)",scope="(.
 // NewImage parses image name which could be the ful name registry:port/name:tag
 // or in any other shorter forms and creates docker image entity without
 // information about layers
-func NewImage(qname, user, password string, insecureTLS bool) (*Image, error) {
+func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) (*Image, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureTLS},
 	}
@@ -108,8 +108,12 @@ func NewImage(qname, user, password string, insecureTLS bool) (*Image, error) {
 	if name == "" {
 		name = strings.Join(nameParts, "/")
 	}
+	if insecureRegistry {
+		registry = fmt.Sprintf("http://%s/v2", registry)
+	} else {
+		registry = fmt.Sprintf("https://%s/v2", registry)
+	}
 
-	registry = fmt.Sprintf("https://%s/v2", registry)
 	return &Image{
 		Registry: registry,
 		Name:     name,
