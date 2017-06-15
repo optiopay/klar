@@ -64,12 +64,17 @@ func main() {
 		insecureTLS = envInsecure
 	}
 
+	insecureRegistry := false
+	if envInsecureReg, err := strconv.ParseBool(os.Getenv("REGISTRY_INSECURE")); err == nil {
+		insecureRegistry = envInsecureReg
+	}
+
 	useJSONOutput := false
 	if envJSONOutput, err := strconv.ParseBool(os.Getenv("JSON_OUTPUT")); err == nil {
 		useJSONOutput = envJSONOutput
 	}
 
-	image, err := docker.NewImage(os.Args[1], dockerUser, dockerPassword, insecureTLS)
+	image, err := docker.NewImage(os.Args[1], dockerUser, dockerPassword, insecureTLS, insecureRegistry)
 	if err != nil {
 		fmt.Printf("Can't parse qname: %s", err)
 		os.Exit(1)
