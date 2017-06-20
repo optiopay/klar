@@ -21,13 +21,13 @@ var store = make(map[string][]clair.Vulnerability)
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Printf("Image name must be provided")
+		fmt.Printf("Image name must be provided\n")
 		os.Exit(1)
 	}
 
 	clairAddr := os.Getenv("CLAIR_ADDR")
 	if clairAddr == "" {
-		fmt.Printf("Clair address must be provided")
+		fmt.Printf("Clair address must be provided\n")
 		os.Exit(1)
 	}
 
@@ -45,7 +45,7 @@ func main() {
 		}
 
 		if !correct {
-			fmt.Printf("Clair output level %s is not supported, only support %v", outputEnv, priorities)
+			fmt.Printf("Clair output level %s is not supported, only support %v\n", outputEnv, priorities)
 			os.Exit(1)
 		}
 	}
@@ -76,20 +76,20 @@ func main() {
 
 	image, err := docker.NewImage(os.Args[1], dockerUser, dockerPassword, insecureTLS, insecureRegistry)
 	if err != nil {
-		fmt.Printf("Can't parse qname: %s", err)
+		fmt.Printf("Can't parse qname: %s\n", err)
 		os.Exit(1)
 	}
 
 	err = image.Pull()
 	if err != nil {
-		fmt.Printf("Can't pull image: %s", err)
+		fmt.Printf("Can't pull image: %s\n", err)
 		os.Exit(1)
 	}
 
 	var output = jsonOutput{}
 
 	if len(image.FsLayers) == 0 {
-		fmt.Printf("Can't pull fsLayers")
+		fmt.Printf("Can't pull fsLayers\n")
 		os.Exit(1)
 	} else {
 		if useJSONOutput {
@@ -109,7 +109,7 @@ func main() {
 		enc := json.NewEncoder(os.Stdout)
 		enc.Encode(output)
 	} else {
-		fmt.Printf("Found %d vulnerabilities \n", len(vs))
+		fmt.Printf("Found %d vulnerabilities\n", len(vs))
 		iteratePriorities(clairOutput, func(sev string) {
 			for _, v := range store[sev] {
 				fmt.Printf("%s: [%s] \n%s\n%s\n", v.Name, v.Severity, v.Description, v.Link)
