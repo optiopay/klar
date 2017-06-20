@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"os"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -44,7 +45,7 @@ var tokenRe = regexp.MustCompile(`Bearer realm="(.*?)",service="(.*?)",scope="(.
 // NewImage parses image name which could be the ful name registry:port/name:tag
 // or in any other shorter forms and creates docker image entity without
 // information about layers
-func NewImage(qname, user, password string, insecureTLS bool) (*Image, error) {
+func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) (*Image, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureTLS},
 	}
@@ -110,10 +111,14 @@ func NewImage(qname, user, password string, insecureTLS bool) (*Image, error) {
 		name = strings.Join(nameParts, "/")
 	}
 	if tag == "" {
-		tag = strings.Join(tagParts, ":")
+    tag = strings.Join(tagParts, ":")
+  }
+	if insecureRegistry {
+		registry = fmt.Sprintf("http://%s/v2", registry)
+	} else {
+		registry = fmt.Sprintf("https://%s/v2", registry)
 	}
 
-	registry = fmt.Sprintf("https://%s/v2", registry)
 	return &Image{
 		Registry: registry,
 		Name:     name,
@@ -146,7 +151,7 @@ func (i *Image) Pull() error {
 	}
 	defer resp.Body.Close()
 	if err = json.NewDecoder(resp.Body).Decode(i); err != nil {
-		fmt.Println("Decode error")
+		fmt.Fprintln(os.Stderr, "Decode error")
 		return err
 	}
 	return nil
@@ -165,7 +170,7 @@ func (i *Image) requestToken(resp *http.Response) (string, error) {
 	url := fmt.Sprintf("%s?service=%s&scope=%s&account=%s", realm, service, scope, i.user)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		fmt.Println("Can't create a request")
+		fmt.Fprintln(os.Stderr, "Can't create a request")
 		return "", err
 	}
 	req.SetBasicAuth(i.user, i.password)
@@ -185,7 +190,7 @@ func (i *Image) requestToken(resp *http.Response) (string, error) {
 	}
 
 	if err = json.NewDecoder(tResp.Body).Decode(&tokenEnv); err != nil {
-		fmt.Println("Token response decode error")
+		fmt.Fprintln(os.Stderr, "Token response decode error")
 		return "", err
 	}
 	return fmt.Sprintf("Bearer %s", tokenEnv.Token), nil
@@ -195,7 +200,7 @@ func (i *Image) pullReq() (*http.Response, error) {
 	url := fmt.Sprintf("%s/%s/manifests/%s", i.Registry, i.Name, i.Tag)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		fmt.Println("Can't create a request")
+		fmt.Fprintln(os.Stderr, "Can't create a request")
 		return nil, err
 	}
 	if i.Token == "" {
@@ -210,7 +215,7 @@ func (i *Image) pullReq() (*http.Response, error) {
 
 	resp, err := i.client.Do(req)
 	if err != nil {
-		fmt.Println("Get error")
+		fmt.Fprintln(os.Stderr, "Get error")
 		return nil, err
 	}
 	return resp, nil
@@ -219,17 +224,17 @@ func (i *Image) pullReq() (*http.Response, error) {
 func dumpRequest(r *http.Request) {
 	dump, err := httputil.DumpRequest(r, true)
 	if err != nil {
-		fmt.Printf("Can't dump HTTP request %s\n", err.Error())
+		fmt.Fprintf(os.Stderr, "Can't dump HTTP request %s\n", err.Error())
 	} else {
-		fmt.Printf("request_dump: %s\n", string(dump[:]))
+		fmt.Fprintf(os.Stderr, "request_dump: %s\n", string(dump[:]))
 	}
 }
 
 func dumpResponse(r *http.Response) {
 	dump, err := httputil.DumpResponse(r, true)
 	if err != nil {
-		fmt.Printf("Can't dump HTTP reqsponse %s\n", err.Error())
+		fmt.Fprintf(os.Stderr, "Can't dump HTTP reqsponse %s\n", err.Error())
 	} else {
-		fmt.Printf("response_dump: %s\n", string(dump[:]))
+		fmt.Fprintf(os.Stderr, "response_dump: %s\n", string(dump[:]))
 	}
 }

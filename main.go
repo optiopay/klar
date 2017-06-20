@@ -21,13 +21,13 @@ var store = make(map[string][]clair.Vulnerability)
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Printf("Image name must be provided")
+		fmt.Fprintf(os.Stderr, "Image name must be provided\n")
 		os.Exit(1)
 	}
 
 	clairAddr := os.Getenv("CLAIR_ADDR")
 	if clairAddr == "" {
-		fmt.Printf("Clair address must be provided")
+		fmt.Fprintf(os.Stderr, "Clair address must be provided\n")
 		os.Exit(1)
 	}
 
@@ -45,7 +45,7 @@ func main() {
 		}
 
 		if !correct {
-			fmt.Printf("Clair output level %s is not supported, only support %v", outputEnv, priorities)
+			fmt.Fprintf(os.Stderr, "Clair output level %s is not supported, only support %v\n", outputEnv, priorities)
 			os.Exit(1)
 		}
 	}
@@ -64,33 +64,38 @@ func main() {
 		insecureTLS = envInsecure
 	}
 
+	insecureRegistry := false
+	if envInsecureReg, err := strconv.ParseBool(os.Getenv("REGISTRY_INSECURE")); err == nil {
+		insecureRegistry = envInsecureReg
+	}
+
 	useJSONOutput := false
 	if envJSONOutput, err := strconv.ParseBool(os.Getenv("JSON_OUTPUT")); err == nil {
 		useJSONOutput = envJSONOutput
 	}
 
-	image, err := docker.NewImage(os.Args[1], dockerUser, dockerPassword, insecureTLS)
+	image, err := docker.NewImage(os.Args[1], dockerUser, dockerPassword, insecureTLS, insecureRegistry)
 	if err != nil {
-		fmt.Printf("Can't parse qname: %s", err)
+		fmt.Fprintf(os.Stderr, "Can't parse qname: %s\n", err)
 		os.Exit(1)
 	}
 
 	err = image.Pull()
 	if err != nil {
-		fmt.Printf("Can't pull image: %s", err)
+		fmt.Fprintf(os.Stderr, "Can't pull image: %s\n", err)
 		os.Exit(1)
 	}
 
 	var output = jsonOutput{}
 
 	if len(image.FsLayers) == 0 {
-		fmt.Printf("Can't pull fsLayers")
+		fmt.Fprintf(os.Stderr, "Can't pull fsLayers\n")
 		os.Exit(1)
 	} else {
 		if useJSONOutput {
 			output.LayerCount = len(image.FsLayers)
 		} else {
-			fmt.Printf("Analysing %d layers\n", len(image.FsLayers))
+			fmt.Fprintf(os.Stderr, "Analysing %d layers\n", len(image.FsLayers))
 		}
 	}
 
@@ -104,7 +109,7 @@ func main() {
 		enc := json.NewEncoder(os.Stdout)
 		enc.Encode(output)
 	} else {
-		fmt.Printf("Found %d vulnerabilities \n", len(vs))
+		fmt.Printf("Found %d vulnerabilities\n", len(vs))
 		iteratePriorities(clairOutput, func(sev string) {
 			for _, v := range store[sev] {
 				fmt.Printf("%s: [%s] \n%s\n%s\n", v.Name, v.Severity, v.Description, v.Link)
