@@ -109,14 +109,14 @@ func main() {
 		enc := json.NewEncoder(os.Stdout)
 		enc.Encode(output)
 	} else {
-		fmt.Fprintf(os.Stderr, "Found %d vulnerabilities \n", len(vs))
+		fmt.Printf("Found %d vulnerabilities \n", len(vs))
 		iteratePriorities(clairOutput, func(sev string) {
 			for _, v := range store[sev] {
-				fmt.Fprintf(os.Stderr, "%s: [%s] \n%s\n%s\n", v.Name, v.Severity, v.Description, v.Link)
-				fmt.Fprintln(os.Stderr, "-----------------------------------------")
+				fmt.Printf("%s: [%s] \n%s\n%s\n", v.Name, v.Severity, v.Description, v.Link)
+				fmt.Println("-----------------------------------------")
 			}
 		})
-		iteratePriorities(priorities[0], func(sev string) { fmt.Fprintf(os.Stderr, "%s: %d\n", sev, len(store[sev])) })
+		iteratePriorities(priorities[0], func(sev string) { fmt.Printf("%s: %d\n", sev, len(store[sev])) })
 	}
 
 	if highSevNumber > threshold {
