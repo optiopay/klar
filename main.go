@@ -14,14 +14,12 @@ var store = make(map[string][]clair.Vulnerability)
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Printf("Image name must be provided")
-		os.Exit(1)
+		failWith("Image name must be provided\n")
 	}
 
 	clairAddr := os.Getenv("CLAIR_ADDR")
 	if clairAddr == "" {
-		fmt.Printf("Clair address must be provided")
-		os.Exit(1)
+		failWith("Clair address must be provided\n")
 	}
 
 	threshold := 0
@@ -35,18 +33,15 @@ func main() {
 
 	image, err := docker.NewImage(os.Args[1], dockerUser, dockerPassword)
 	if err != nil {
-		fmt.Printf("Can't parse qname: %s", err)
-		os.Exit(1)
+		failWith("Can't parse qname: %s\n", err.Error())
 	}
 
 	err = image.Pull()
 	if err != nil {
-		fmt.Printf("Can't pull image: %s", err)
-		os.Exit(1)
+		failWith("Can't pull image: %s\n", err.Error())
 	}
 	if len(image.FsLayers) == 0 {
-		fmt.Printf("Can't pull fsLayers")
-		os.Exit(1)
+		failWith("Can't pull fsLayers\n")
 	} else {
 		fmt.Printf("Analysing %d layers\n", len(image.FsLayers))
 	}
@@ -54,7 +49,7 @@ func main() {
 	c := clair.NewClair(clairAddr)
 	vs := c.Analyse(image)
 	groupBySeverity(vs)
-	fmt.Printf("Found %d vulnerabilities \n", len(vs))
+	fmt.Printf("Found %d vulnerabilities\n", len(vs))
 	highSevNumber := len(store["High"]) + len(store["Critical"]) + len(store["Defcon1"])
 
 	iteratePriorities(func(sev string) {
@@ -68,6 +63,11 @@ func main() {
 	if highSevNumber > threshold {
 		os.Exit(1)
 	}
+}
+
+func failWith(format string, a ...interface{}) {
+	fmt.Fprintf(os.Stderr, format, a...)
+	os.Exit(1)
 }
 
 func iteratePriorities(f func(sev string)) {
