@@ -21,13 +21,13 @@ var store = make(map[string][]clair.Vulnerability)
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Printf("Image name must be provided")
+		fmt.Fprintf(os.Stderr, "Image name must be provided")
 		os.Exit(1)
 	}
 
 	clairAddr := os.Getenv("CLAIR_ADDR")
 	if clairAddr == "" {
-		fmt.Printf("Clair address must be provided")
+		fmt.Fprintf(os.Stderr, "Clair address must be provided")
 		os.Exit(1)
 	}
 
@@ -45,7 +45,7 @@ func main() {
 		}
 
 		if !correct {
-			fmt.Printf("Clair output level %s is not supported, only support %v", outputEnv, priorities)
+			fmt.Fprintf(os.Stderr, "Clair output level %s is not supported, only support %v", outputEnv, priorities)
 			os.Exit(1)
 		}
 	}
@@ -76,26 +76,26 @@ func main() {
 
 	image, err := docker.NewImage(os.Args[1], dockerUser, dockerPassword, insecureTLS, insecureRegistry)
 	if err != nil {
-		fmt.Printf("Can't parse qname: %s", err)
+		fmt.Fprintf(os.Stderr, "Can't parse qname: %s", err)
 		os.Exit(1)
 	}
 
 	err = image.Pull()
 	if err != nil {
-		fmt.Printf("Can't pull image: %s", err)
+		fmt.Fprintf(os.Stderr, "Can't pull image: %s", err)
 		os.Exit(1)
 	}
 
 	var output = jsonOutput{}
 
 	if len(image.FsLayers) == 0 {
-		fmt.Printf("Can't pull fsLayers")
+		fmt.Fprintf(os.Stderr, "Can't pull fsLayers")
 		os.Exit(1)
 	} else {
 		if useJSONOutput {
 			output.LayerCount = len(image.FsLayers)
 		} else {
-			fmt.Printf("Analysing %d layers\n", len(image.FsLayers))
+			fmt.Fprintf(os.Stderr, "Analysing %d layers\n", len(image.FsLayers))
 		}
 	}
 
@@ -109,14 +109,14 @@ func main() {
 		enc := json.NewEncoder(os.Stdout)
 		enc.Encode(output)
 	} else {
-		fmt.Printf("Found %d vulnerabilities \n", len(vs))
+		fmt.Fprintf(os.Stderr, "Found %d vulnerabilities \n", len(vs))
 		iteratePriorities(clairOutput, func(sev string) {
 			for _, v := range store[sev] {
-				fmt.Printf("%s: [%s] \n%s\n%s\n", v.Name, v.Severity, v.Description, v.Link)
-				fmt.Println("-----------------------------------------")
+				fmt.Fprintf(os.Stderr, "%s: [%s] \n%s\n%s\n", v.Name, v.Severity, v.Description, v.Link)
+				fmt.Fprintln(os.Stderr, "-----------------------------------------")
 			}
 		})
-		iteratePriorities(priorities[0], func(sev string) { fmt.Printf("%s: %d\n", sev, len(store[sev])) })
+		iteratePriorities(priorities[0], func(sev string) { fmt.Fprintf(os.Stderr, "%s: %d\n", sev, len(store[sev])) })
 	}
 
 	if highSevNumber > threshold {
