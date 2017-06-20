@@ -66,7 +66,7 @@ func TestNewImage(t *testing.T) {
 		},
 	}
 	for name, tc := range tcs {
-		image, err := NewImage(tc.image, "", "", false)
+		image, err := NewImage(tc.image, "", "", false, false)
 		if err != nil {
 			t.Fatalf("%s: Can't parse image name: %s", name, err)
 		}
@@ -93,7 +93,7 @@ func TestPull(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	image, err := NewImage("docker-registry.domain.com/nginx:1b29e1531c", "", "", false)
+	image, err := NewImage("docker-registry.domain.com/nginx:1b29e1531c", "", "", false, false)
 	image.Registry = ts.URL
 	err = image.Pull()
 	if err != nil {
