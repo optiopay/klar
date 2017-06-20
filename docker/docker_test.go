@@ -58,9 +58,15 @@ func TestNewImage(t *testing.T) {
 			name:     "library/postgres",
 			tag:      "9.5.1",
 		},
+		"digest": {
+			image:    "postgres@sha256:f6a2b81d981ace74aeafb2ed2982d52984d82958bfe836b82cbe4bf1ba440999",
+			registry: "https://registry-1.docker.io/v2",
+			name:     "library/postgres",
+			tag:      "sha256:f6a2b81d981ace74aeafb2ed2982d52984d82958bfe836b82cbe4bf1ba440999",
+		},
 	}
 	for name, tc := range tcs {
-		image, err := NewImage(tc.image, "", "")
+		image, err := NewImage(tc.image, "", "", false)
 		if err != nil {
 			t.Fatalf("%s: Can't parse image name: %s", name, err)
 		}
@@ -87,7 +93,7 @@ func TestPull(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	image, err := NewImage("docker-registry.domain.com/nginx:1b29e1531c", "", "")
+	image, err := NewImage("docker-registry.domain.com/nginx:1b29e1531c", "", "", false)
 	image.Registry = ts.URL
 	err = image.Pull()
 	if err != nil {

@@ -52,12 +52,12 @@ func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) 
 	client := http.Client{Transport: tr}
 	registry := dockerHub
 	tag := "latest"
-	var nameParts []string
+	var nameParts, tagParts []string
 	var name, port string
 	state := stateInitial
 	start := 0
 	for i, c := range qname {
-		if c == ':' || c == '/' || i == len(qname)-1 {
+		if c == ':' || c == '/' || c == '@' || i == len(qname)-1 {
 			if i == len(qname)-1 {
 				// ignore a separator, include the last symbol
 				i += 1
@@ -90,12 +90,13 @@ func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) 
 					}
 				}
 			case stateTag:
-				tag = part
+				tag = ""
+				tagParts = append(tagParts, part)
 			case statePort:
 				state = stateName
 				port = part
 			case stateName:
-				if c == ':' {
+				if c == ':' || c == '@' {
 					state = stateTag
 				}
 				nameParts = append(nameParts, part)
@@ -109,6 +110,9 @@ func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) 
 	if name == "" {
 		name = strings.Join(nameParts, "/")
 	}
+	if tag == "" {
+    tag = strings.Join(tagParts, ":")
+  }
 	if insecureRegistry {
 		registry = fmt.Sprintf("http://%s/v2", registry)
 	} else {
