@@ -1,6 +1,7 @@
 package clair
 
 import (
+	"os"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -108,7 +109,7 @@ func (c *Clair) Analyse(image *docker.Image) []Vulnerability {
 	image.FsLayers = filterEmptyLayers(image.FsLayers)
 	layerLength := len(image.FsLayers)
 	if layerLength == 0 {
-		fmt.Printf("No need to analyse image %s/%s:%s as there is no non-emtpy layer\n",
+		fmt.Fprintf(os.Stderr, "No need to analyse image %s/%s:%s as there is no non-emtpy layer\n",
 			image.Registry, image.Name, image.Tag)
 		return nil
 	}
@@ -118,14 +119,14 @@ func (c *Clair) Analyse(image *docker.Image) []Vulnerability {
 		layer := newLayer(image, i)
 		err := c.pushLayer(layer)
 		if err != nil {
-			fmt.Printf("Push layer %d failed: %s\n", i, err.Error())
+			fmt.Fprintf(os.Stderr, "Push layer %d failed: %s\n", i, err.Error())
 			continue
 		}
 	}
 
 	vs, err := c.analyzeLayer(image.FsLayers[0])
 	if err != nil {
-		fmt.Printf("Analyse image %s/%s:%s failed: %s\n", image.Registry, image.Name, image.Tag, err.Error())
+		fmt.Fprintf(os.Stderr, "Analyse image %s/%s:%s failed: %s\n", image.Registry, image.Name, image.Tag, err.Error())
 		return nil
 	}
 
