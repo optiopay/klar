@@ -95,7 +95,7 @@ func main() {
 		if useJSONOutput {
 			output.LayerCount = len(image.FsLayers)
 		} else {
-			fmt.Fprintf(os.Stderr, "Analysing %d layers\n", len(image.FsLayers))
+			fmt.Printf("Analysing %d layers\n", len(image.FsLayers))
 		}
 	}
 
