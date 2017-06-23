@@ -13,7 +13,7 @@ import (
 
 type jsonOutput struct {
 	LayerCount      int
-	Vulnerabilities []clair.Vulnerability
+	Vulnerabilities map[string][]clair.Vulnerability
 }
 
 var priorities = []string{"Unknown", "Negligible", "Low", "Medium", "High", "Critical", "Defcon1"}
@@ -86,7 +86,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	var output = jsonOutput{}
+	output := jsonOutput{
+		Vulnerabilities: make(map[string][]clair.Vulnerability),
+	}
 
 	if len(image.FsLayers) == 0 {
 		fmt.Fprintf(os.Stderr, "Can't pull fsLayers\n")
@@ -105,7 +107,9 @@ func main() {
 	highSevNumber := len(store["High"]) + len(store["Critical"]) + len(store["Defcon1"])
 
 	if useJSONOutput {
-		output.Vulnerabilities = vs
+		iteratePriorities(clairOutput, func(sev string) {
+			output.Vulnerabilities[sev] = store[sev]
+		})
 		enc := json.NewEncoder(os.Stdout)
 		enc.Encode(output)
 	} else {
