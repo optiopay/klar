@@ -38,6 +38,26 @@ type FsLayer struct {
 	BlobSum string
 }
 
+// ImageV1 represents a Manifest V 2, Schema 1 Docker Image
+type imageV1 struct {
+	FsLayers []fsLayer
+}
+
+// FsLayer represents a layer in a Manifest V 2, Schema 1 Docker Image
+type fsLayer struct {
+	BlobSum string
+}
+
+// imageV2 represents Manifest V 2, Schema 2 Docker Image
+type imageV2 struct {
+	Layers []layer
+}
+
+// Layer represents a layer in a Manifest V 2, Schema 2 Docker Image
+type layer struct {
+	Digest string
+}
+
 const dockerHub = "registry-1.docker.io"
 
 var tokenRe = regexp.MustCompile(`Bearer realm="(.*?)",service="(.*?)",scope="(.*?)"`)
@@ -150,9 +170,27 @@ func (i *Image) Pull() error {
 		}
 	}
 	defer resp.Body.Close()
-	if err = json.NewDecoder(resp.Body).Decode(i); err != nil {
-		fmt.Fprintln(os.Stderr, "Decode error")
-		return err
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "application/vnd.docker.distribution.manifest.v2+json" {
+		var imageV2 imageV2
+		if err = json.NewDecoder(resp.Body).Decode(&imageV2); err != nil {
+			fmt.Fprintln(os.Stderr, "Image V2 decode error")
+			return err
+		}
+		i.FsLayers = make([]FsLayer, len(imageV2.Layers))
+		for idx := range imageV2.Layers {
+			i.FsLayers[idx].BlobSum = imageV2.Layers[idx].Digest
+		}
+	} else {
+		var imageV1 imageV1
+		if err = json.NewDecoder(resp.Body).Decode(&imageV1); err != nil {
+			fmt.Fprintln(os.Stderr, "ImageV1 decode error")
+			return err
+		}
+		i.FsLayers = make([]FsLayer, len(imageV1.FsLayers))
+		for idx := range imageV1.FsLayers {
+			i.FsLayers[idx].BlobSum = imageV1.FsLayers[idx].BlobSum
+		}
 	}
 	return nil
 }
@@ -210,8 +248,8 @@ func (i *Image) pullReq() (*http.Response, error) {
 		req.Header.Set("Authorization", i.Token)
 	}
 
-	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v2+json")
-	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
+	// Prefer v2 manifests
+	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v2+json, application/vnd.docker.distribution.manifest.list.v2+json")
 
 	resp, err := i.client.Do(req)
 	if err != nil {
