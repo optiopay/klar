@@ -170,29 +170,41 @@ func (i *Image) Pull() error {
 		}
 	}
 	defer resp.Body.Close()
+	digests, err := extractLayerDigests(resp)
+	if err != nil {
+		return err
+	}
+	i.FsLayers = make([]FsLayer, len(digests))
+	for idx := range digests {
+		i.FsLayers[idx].BlobSum = digests[idx]
+	}
+	return err
+}
+
+func extractLayerDigests(resp *http.Response) (digests []string, err error) {
 	contentType := resp.Header.Get("Content-Type")
 	if contentType == "application/vnd.docker.distribution.manifest.v2+json" {
 		var imageV2 imageV2
 		if err = json.NewDecoder(resp.Body).Decode(&imageV2); err != nil {
 			fmt.Fprintln(os.Stderr, "Image V2 decode error")
-			return err
+			return nil, err
 		}
-		i.FsLayers = make([]FsLayer, len(imageV2.Layers))
-		for idx := range imageV2.Layers {
-			i.FsLayers[idx].BlobSum = imageV2.Layers[idx].Digest
+		digests = make([]string, len(imageV2.Layers))
+		for i := range imageV2.Layers {
+			digests[i] = imageV2.Layers[i].Digest
 		}
 	} else {
 		var imageV1 imageV1
 		if err = json.NewDecoder(resp.Body).Decode(&imageV1); err != nil {
 			fmt.Fprintln(os.Stderr, "ImageV1 decode error")
-			return err
+			return nil, err
 		}
-		i.FsLayers = make([]FsLayer, len(imageV1.FsLayers))
-		for idx := range imageV1.FsLayers {
-			i.FsLayers[idx].BlobSum = imageV1.FsLayers[idx].BlobSum
+		digests = make([]string, len(imageV1.FsLayers))
+		for i := range imageV1.FsLayers {
+			digests[i] = imageV1.FsLayers[i].BlobSum
 		}
 	}
-	return nil
+	return digests, nil
 }
 
 func (i *Image) requestToken(resp *http.Response) (string, error) {
