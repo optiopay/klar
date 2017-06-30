@@ -83,9 +83,31 @@ func TestNewImage(t *testing.T) {
 
 }
 
-func TestPull(t *testing.T) {
+func TestPullManifestSchemaV1(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp, err := ioutil.ReadFile("testdata/registry-response.json")
+		if err != nil {
+			t.Fatalf("Can't load registry test response %s", err.Error())
+		}
+		fmt.Fprintln(w, string(resp))
+	}))
+	defer ts.Close()
+
+	image, err := NewImage("docker-registry.domain.com/nginx:1b29e1531c", "", "", false, false)
+	image.Registry = ts.URL
+	err = image.Pull()
+	if err != nil {
+		t.Fatalf("Can't pull image: %s", err)
+	}
+	if len(image.FsLayers) == 0 {
+		t.Fatal("Can't pull fsLayers")
+	}
+}
+
+func TestPullManifestSchemaV2(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp, err := ioutil.ReadFile("testdata/registry-response-schemav2.json")
+		w.Header().Set("Content-Type", "application/vnd.docker.distribution.manifest.v2+json")
 		if err != nil {
 			t.Fatalf("Can't load registry test response %s", err.Error())
 		}
