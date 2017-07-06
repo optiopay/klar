@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/http/httputil"
 	"os"
@@ -86,9 +85,16 @@ func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) 
 			start = i + 1
 			switch state {
 			case stateInitial:
-				addrs, err := net.LookupHost(part)
-				// not a hostname?
-				if err != nil || len(addrs) == 0 {
+				//addrs, err := net.LookupHost(part)
+				if part == "localhost" || strings.Contains(part, ".") {
+					// it's registry, let's check what's next =port of image name
+					registry = part
+					if c == ':' {
+						state = statePort
+					} else {
+						state = stateName
+					}
+				} else {
 					// it's an image name, if separator is /
 					// next part is also part of the name
 					// othrewise it's an offcial image
@@ -99,14 +105,6 @@ func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) 
 					} else {
 						state = stateTag
 						name = fmt.Sprintf("library/%s", part)
-					}
-				} else {
-					// it's registry, let's check what's next =port of image name
-					registry = part
-					if c == ':' {
-						state = statePort
-					} else {
-						state = stateName
 					}
 				}
 			case stateTag:

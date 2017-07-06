@@ -64,6 +64,18 @@ func TestNewImage(t *testing.T) {
 			name:     "library/postgres",
 			tag:      "sha256:f6a2b81d981ace74aeafb2ed2982d52984d82958bfe836b82cbe4bf1ba440999",
 		},
+		"localhost_no_tag": {
+			image:    "localhost/nginx",
+			registry: "https://localhost/v2",
+			name:     "nginx",
+			tag:      "latest",
+		},
+		"localhost_tag_with_port": {
+			image:    "localhost:8080/nginx:xxx",
+			registry: "https://localhost:8080/v2",
+			name:     "nginx",
+			tag:      "xxx",
+		},
 	}
 	for name, tc := range tcs {
 		image, err := NewImage(tc.image, "", "", false, false)
