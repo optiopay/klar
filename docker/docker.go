@@ -1,7 +1,6 @@
 package docker
 
 import (
-	"os"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -10,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"os"
 	"regexp"
 	"strings"
 )
@@ -131,8 +131,8 @@ func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) 
 		name = strings.Join(nameParts, "/")
 	}
 	if tag == "" {
-    tag = strings.Join(tagParts, ":")
-  }
+		tag = strings.Join(tagParts, ":")
+	}
 	if insecureRegistry {
 		registry = fmt.Sprintf("http://%s/v2", registry)
 	} else {
@@ -217,13 +217,20 @@ func (i *Image) requestToken(resp *http.Response) (string, error) {
 		return "", fmt.Errorf("Can't parse Www-Authenticate: %s", authHeader)
 	}
 	realm, service, scope := parts[1], parts[2], parts[3]
-	url := fmt.Sprintf("%s?service=%s&scope=%s&account=%s", realm, service, scope, i.user)
+	var url string
+	if i.user != "" {
+		url = fmt.Sprintf("%s?service=%s&scope=%s&account=%s", realm, service, scope, i.user)
+	} else {
+		url = fmt.Sprintf("%s?service=%s&scope=%s", realm, service, scope)
+	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Can't create a request")
 		return "", err
 	}
-	req.SetBasicAuth(i.user, i.password)
+	if i.user != "" {
+		req.SetBasicAuth(i.user, i.password)
+	}
 	tResp, err := i.client.Do(req)
 	if err != nil {
 		io.Copy(ioutil.Discard, tResp.Body)
@@ -254,8 +261,10 @@ func (i *Image) pullReq() (*http.Response, error) {
 		return nil, err
 	}
 	if i.Token == "" {
-		req.SetBasicAuth(i.user, i.password)
-		i.Token = req.Header.Get("Authorization")
+		if i.user != "" {
+			req.SetBasicAuth(i.user, i.password)
+			i.Token = req.Header.Get("Authorization")
+		}
 	} else {
 		req.Header.Set("Authorization", i.Token)
 	}
