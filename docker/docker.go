@@ -85,7 +85,6 @@ func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) 
 			start = i + 1
 			switch state {
 			case stateInitial:
-				//addrs, err := net.LookupHost(part)
 				if part == "localhost" || strings.Contains(part, ".") {
 					// it's registry, let's check what's next =port of image name
 					registry = part
