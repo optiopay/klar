@@ -25,17 +25,17 @@ Klar process returns `0` if number of detected high severity vulnerabilities in 
 Klar can be configured via the following environment variables:
 
 * `CLAIR_ADDR` - address of Clair server, the most complete form is `protocol://host:port`
-protocol and port may be omited, `http` and `6060` are used by default
+protocol and port may be omited, `http` and `6060` are used by default.
 
 * `CLAIR_OUTPUT` - severity level threshold, vulnerabilities with severity level higher than or equal to this threshold
-will be outputed. Supported levels are `Unknown`, `Negligible`, `Low`, `Medium`, `High`, `Critical`, `Defcon1`.
+will be outputted. Supported levels are `Unknown`, `Negligible`, `Low`, `Medium`, `High`, `Critical`, `Defcon1`.
 Default is `Unknown`.
 
 * `CLAIR_THRESHOLD` - how many high severity vulnerabilities Klar can tolerate before returning `1`. Default is 0.
 
-* `DOCKER_USER` - Docker registry account name
+* `DOCKER_USER` - Docker registry account name.
 
-* `DOCKER_PASSWORD` - Docker registry account password
+* `DOCKER_PASSWORD` - Docker registry account password.
 
 * `DOCKER_INSECURE` - Allow Klar to access registries with bad SSL certificates. Default is `false`. Clair will 
 need to be booted with `-insecure-tls` for this to work.
