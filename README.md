@@ -31,7 +31,7 @@ protocol and port may be omited, `http` and `6060` are used by default.
 will be outputted. Supported levels are `Unknown`, `Negligible`, `Low`, `Medium`, `High`, `Critical`, `Defcon1`.
 Default is `Unknown`.
 
-* `CLAIR_THRESHOLD` - how many high severity vulnerabilities Klar can tolerate before returning `1`. Default is 0.
+* `CLAIR_THRESHOLD` - how many outputted vulnerabilities Klar can tolerate before returning `1`. Default is 0.
 
 * `DOCKER_USER` - Docker registry account name.
 

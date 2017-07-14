@@ -104,10 +104,11 @@ func main() {
 	c := clair.NewClair(clairAddr)
 	vs := c.Analyse(image)
 	groupBySeverity(vs)
-	highSevNumber := len(store["High"]) + len(store["Critical"]) + len(store["Defcon1"])
+	vsNumber := 0
 
 	if useJSONOutput {
 		iteratePriorities(clairOutput, func(sev string) {
+			vsNumber += len(store[sev])
 			output.Vulnerabilities[sev] = store[sev]
 		})
 		enc := json.NewEncoder(os.Stdout)
@@ -115,6 +116,7 @@ func main() {
 	} else {
 		fmt.Printf("Found %d vulnerabilities\n", len(vs))
 		iteratePriorities(clairOutput, func(sev string) {
+			vsNumber += len(store[sev])
 			for _, v := range store[sev] {
 				fmt.Printf("%s: [%s] \n%s\n%s\n", v.Name, v.Severity, v.Description, v.Link)
 				fmt.Println("-----------------------------------------")
@@ -123,7 +125,7 @@ func main() {
 		iteratePriorities(priorities[0], func(sev string) { fmt.Printf("%s: %d\n", sev, len(store[sev])) })
 	}
 
-	if highSevNumber > threshold {
+	if vsNumber > threshold {
 		os.Exit(1)
 	}
 }
