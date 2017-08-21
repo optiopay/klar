@@ -1,4 +1,4 @@
-FROM scratch
+FROM alpine
 
 ENV DOMAIN=skydns.local
 ENV RELEASE 0.1
