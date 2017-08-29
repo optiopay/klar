@@ -62,7 +62,7 @@ To build Docker image run in the project root (replace `klar` with fully qualifi
 
     docker build -t klar .
 
-Then create an env file or pass env vars as separate ``--env` arguments. For example save it as `my-klar.env`
+Then pass env vars as separate `--env` arguments, or create an env file and pass it as `--env-file` argument. For example save env vars as `my-klar.env`:
 
     CLAIR_ADDR=http://localhost
     CLAIR_OUTPUT=High
@@ -72,7 +72,7 @@ Then create an env file or pass env vars as separate ``--env` arguments. For exa
 
 Then run
 
-    docker run --env-file=my-klar-env klar postgres:9.5.1
+    docker run --env-file=my-klar.env klar postgres:9.5.1
 
 ## Amazon ECR support
 There is no permanent username/password for Amazon ECR, the credentials must be retrived using `aws ecr get-login` and they are valid for 12 hours. Here is a sample script which may be used to provide Klar with ECR credentials:
