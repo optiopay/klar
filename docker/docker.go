@@ -267,7 +267,7 @@ func (i *Image) pullReq() (*http.Response, error) {
 	}
 
 	// Prefer manifest schema v2
-	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v2+json, application/vnd.docker.distribution.manifest.list.v2+json")
+	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v2+json")
 
 	resp, err := i.client.Do(req)
 	if err != nil {
