@@ -52,9 +52,9 @@ Usage:
 
 ## Dockerized version
 
-Klar can be dockerized. Go to `$GOPATH/src/github.com/optiopay/klar` and build Klar in project root:
+Klar can be dockerized. Go to `$GOPATH/src/github.com/optiopay/klar` and build Klar in project root. If you are on Linux:
 
-    go build .
+    CGO_ENABLED=0 go build -a -installsuffix cgo .
 
 If you are on Mac don't forget to build it for Linux:
 
