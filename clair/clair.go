@@ -1,12 +1,12 @@
 package clair
 
 import (
-	"os"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -80,12 +80,12 @@ func NewClair(url string) Clair {
 
 func newLayer(image *docker.Image, index int) *layer {
 	var parentName string
-	if index < len(image.FsLayers)-1 {
-		parentName = image.FsLayers[index+1].BlobSum
+	if index != 0 {
+		parentName = image.LayerName(index - 1)
 	}
 
 	return &layer{
-		Name:       image.FsLayers[index].BlobSum,
+		Name:       image.LayerName(index),
 		Path:       strings.Join([]string{image.Registry, image.Name, "blobs", image.FsLayers[index].BlobSum}, "/"),
 		ParentName: parentName,
 		Format:     "Docker",
@@ -115,7 +115,7 @@ func (c *Clair) Analyse(image *docker.Image) []Vulnerability {
 	}
 
 	var vs []Vulnerability
-	for i := layerLength - 1; i >= 0; i-- {
+	for i := 0; i < layerLength; i++ {
 		layer := newLayer(image, i)
 		err := c.pushLayer(layer)
 		if err != nil {
@@ -124,7 +124,7 @@ func (c *Clair) Analyse(image *docker.Image) []Vulnerability {
 		}
 	}
 
-	vs, err := c.analyzeLayer(image.FsLayers[0])
+	vs, err := c.analyzeLayer(image.AnalyzedLayerName())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Analyse image %s/%s:%s failed: %s\n", image.Registry, image.Name, image.Tag, err.Error())
 		return nil
@@ -133,8 +133,8 @@ func (c *Clair) Analyse(image *docker.Image) []Vulnerability {
 	return vs
 }
 
-func (c *Clair) analyzeLayer(layer docker.FsLayer) ([]Vulnerability, error) {
-	url := fmt.Sprintf("%s/v1/layers/%s?vulnerabilities", c.url, layer.BlobSum)
+func (c *Clair) analyzeLayer(layerName string) ([]Vulnerability, error) {
+	url := fmt.Sprintf("%s/v1/layers/%s?vulnerabilities", c.url, layerName)
 	response, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -169,7 +169,6 @@ func (c *Clair) pushLayer(layer *layer) error {
 		return fmt.Errorf("Can't create a push request: %s", err)
 	}
 	request.Header.Set("Content-Type", "application/json")
-	//fmt.Printf("Pushing layer %v\n", layer)
 	response, err := (&http.Client{Timeout: time.Minute}).Do(request)
 	if err != nil {
 		return fmt.Errorf("Can't push layer to Clair: %s", err)

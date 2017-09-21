@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/http/httputil"
 	"os"
 	"regexp"
 	"strings"
@@ -22,14 +21,34 @@ const (
 
 // Image represents Docker image
 type Image struct {
-	Registry string
-	Name     string
-	Tag      string
-	FsLayers []FsLayer
-	Token    string
-	user     string
-	password string
-	client   http.Client
+	Registry      string
+	Name          string
+	Tag           string
+	FsLayers      []FsLayer
+	Token         string
+	user          string
+	password      string
+	client        http.Client
+	digest        string
+	schemaVersion int
+}
+
+func (i *Image) LayerName(index int) string {
+	s := fmt.Sprintf("%s%s", trimDigest(i.digest),
+		trimDigest(i.FsLayers[index].BlobSum))
+	return s
+}
+
+func (i *Image) AnalyzedLayerName() string {
+	index := len(i.FsLayers) - 1
+	if i.schemaVersion == 1 {
+		index = 0
+	}
+	return i.LayerName(index)
+}
+
+func trimDigest(d string) string {
+	return strings.Replace(d, "sha256:", "", 1)
 }
 
 // FsLayer represents a layer in docker image
@@ -39,7 +58,8 @@ type FsLayer struct {
 
 // ImageV1 represents a Manifest V 2, Schema 1 Docker Image
 type imageV1 struct {
-	FsLayers []fsLayer
+	SchemaVersion int
+	FsLayers      []fsLayer
 }
 
 // FsLayer represents a layer in a Manifest V 2, Schema 1 Docker Image
@@ -47,9 +67,16 @@ type fsLayer struct {
 	BlobSum string
 }
 
+type config struct {
+	MediaType string
+	Digest    string
+}
+
 // imageV2 represents Manifest V 2, Schema 2 Docker Image
 type imageV2 struct {
-	Layers []layer
+	SchemaVersion int
+	Config        config
+	Layers        []layer
 }
 
 // Layer represents a layer in a Manifest V 2, Schema 2 Docker Image
@@ -167,41 +194,38 @@ func (i *Image) Pull() error {
 		}
 	}
 	defer resp.Body.Close()
-	digests, err := extractLayerDigests(resp)
-	if err != nil {
-		return err
-	}
-	i.FsLayers = make([]FsLayer, len(digests))
-	for idx := range digests {
-		i.FsLayers[idx].BlobSum = digests[idx]
-	}
-	return err
+	return parseImageResponse(resp, i)
 }
 
-func extractLayerDigests(resp *http.Response) (digests []string, err error) {
+func parseImageResponse(resp *http.Response, image *Image) error {
 	contentType := resp.Header.Get("Content-Type")
 	if contentType == "application/vnd.docker.distribution.manifest.v2+json" {
 		var imageV2 imageV2
-		if err = json.NewDecoder(resp.Body).Decode(&imageV2); err != nil {
+		if err := json.NewDecoder(resp.Body).Decode(&imageV2); err != nil {
 			fmt.Fprintln(os.Stderr, "Image V2 decode error")
-			return nil, err
+			return err
 		}
-		digests = make([]string, len(imageV2.Layers))
+		image.FsLayers = make([]FsLayer, len(imageV2.Layers))
 		for i := range imageV2.Layers {
-			digests[i] = imageV2.Layers[i].Digest
+			image.FsLayers[i].BlobSum = imageV2.Layers[i].Digest
 		}
+		image.digest = imageV2.Config.Digest
+		image.schemaVersion = imageV2.SchemaVersion
 	} else {
 		var imageV1 imageV1
-		if err = json.NewDecoder(resp.Body).Decode(&imageV1); err != nil {
+		if err := json.NewDecoder(resp.Body).Decode(&imageV1); err != nil {
 			fmt.Fprintln(os.Stderr, "ImageV1 decode error")
-			return nil, err
+			return err
 		}
-		digests = make([]string, len(imageV1.FsLayers))
+		image.FsLayers = make([]FsLayer, len(imageV1.FsLayers))
+		// in schemaVersion 1 layers are in reverse order, so we save them in the same order as v2
+		// base layer is the first
 		for i := range imageV1.FsLayers {
-			digests[i] = imageV1.FsLayers[i].BlobSum
+			image.FsLayers[len(imageV1.FsLayers)-1-i].BlobSum = imageV1.FsLayers[i].BlobSum
 		}
+		image.schemaVersion = imageV1.SchemaVersion
 	}
-	return digests, nil
+	return nil
 }
 
 func (i *Image) requestToken(resp *http.Response) (string, error) {
@@ -268,29 +292,10 @@ func (i *Image) pullReq() (*http.Response, error) {
 
 	// Prefer manifest schema v2
 	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v2+json")
-
 	resp, err := i.client.Do(req)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Get error")
 		return nil, err
 	}
 	return resp, nil
-}
-
-func dumpRequest(r *http.Request) {
-	dump, err := httputil.DumpRequest(r, true)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Can't dump HTTP request %s\n", err.Error())
-	} else {
-		fmt.Fprintf(os.Stderr, "request_dump: %s\n", string(dump[:]))
-	}
-}
-
-func dumpResponse(r *http.Response) {
-	dump, err := httputil.DumpResponse(r, true)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Can't dump HTTP reqsponse %s\n", err.Error())
-	} else {
-		fmt.Fprintf(os.Stderr, "response_dump: %s\n", string(dump[:]))
-	}
 }
