@@ -10,6 +10,9 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
+
+	"github.com/optiopay/klar/utils"
 )
 
 const (
@@ -95,7 +98,10 @@ func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureTLS},
 	}
-	client := http.Client{Transport: tr}
+	client := http.Client{
+		Transport: tr,
+		Timeout:   time.Minute,
+	}
 	registry := dockerHub
 	tag := "latest"
 	var nameParts, tagParts []string
@@ -292,10 +298,12 @@ func (i *Image) pullReq() (*http.Response, error) {
 
 	// Prefer manifest schema v2
 	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v2+json")
+	utils.DumpRequest(req)
 	resp, err := i.client.Do(req)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Get error")
 		return nil, err
 	}
+	utils.DumpResponse(resp)
 	return resp, nil
 }
