@@ -5,8 +5,6 @@ Klar is a simple tool to analyze images stored in a private or public  Docker re
 
 Klar serves as a client which coordinates the image checks between the Docker registry and Clair.
 
-**Please use v1.5 RC2, older versions may not work with modern Docker images https://github.com/optiopay/klar/releases/tag/v1.5-RC2**
-
 ## Binary installation
 
 The simples way is to download the latest relase (for OSX and Linux) from https://github.com/optiopay/klar/releases/ and put the binary in a folder in your `PATH`, make sure it has execute permission
