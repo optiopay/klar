@@ -9,6 +9,7 @@ import (
 
 	"github.com/optiopay/klar/clair"
 	"github.com/optiopay/klar/docker"
+	"github.com/optiopay/klar/utils"
 )
 
 type jsonOutput struct {
@@ -23,6 +24,10 @@ func main() {
 	if len(os.Args) != 2 {
 		fmt.Fprintf(os.Stderr, "Image name must be provided\n")
 		os.Exit(1)
+	}
+
+	if os.Getenv("KLAR_TRACE") != "" {
+		utils.Trace = true
 	}
 
 	clairAddr := os.Getenv("CLAIR_ADDR")

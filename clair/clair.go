@@ -1,23 +1,25 @@
 package clair
 
 import (
-	"os"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/optiopay/klar/docker"
+	"github.com/optiopay/klar/utils"
 )
 
 const EMPTY_LAYER_BLOB_SUM = "sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4"
 
 // Clair is representation of Clair server
 type Clair struct {
-	url string
+	url    string
+	client http.Client
 }
 
 type layer struct {
@@ -75,17 +77,21 @@ func NewClair(url string) Clair {
 	if strings.LastIndex(url, ":") < 5 {
 		url = fmt.Sprintf("%s:6060", url)
 	}
-	return Clair{url}
+	client := http.Client{
+		Timeout: time.Minute,
+	}
+
+	return Clair{url, client}
 }
 
 func newLayer(image *docker.Image, index int) *layer {
 	var parentName string
-	if index < len(image.FsLayers)-1 {
-		parentName = image.FsLayers[index+1].BlobSum
+	if index != 0 {
+		parentName = image.LayerName(index - 1)
 	}
 
 	return &layer{
-		Name:       image.FsLayers[index].BlobSum,
+		Name:       image.LayerName(index),
 		Path:       strings.Join([]string{image.Registry, image.Name, "blobs", image.FsLayers[index].BlobSum}, "/"),
 		ParentName: parentName,
 		Format:     "Docker",
@@ -115,7 +121,7 @@ func (c *Clair) Analyse(image *docker.Image) []Vulnerability {
 	}
 
 	var vs []Vulnerability
-	for i := layerLength - 1; i >= 0; i-- {
+	for i := 0; i < layerLength; i++ {
 		layer := newLayer(image, i)
 		err := c.pushLayer(layer)
 		if err != nil {
@@ -124,7 +130,7 @@ func (c *Clair) Analyse(image *docker.Image) []Vulnerability {
 		}
 	}
 
-	vs, err := c.analyzeLayer(image.FsLayers[0])
+	vs, err := c.analyzeLayer(image.AnalyzedLayerName())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Analyse image %s/%s:%s failed: %s\n", image.Registry, image.Name, image.Tag, err.Error())
 		return nil
@@ -133,12 +139,18 @@ func (c *Clair) Analyse(image *docker.Image) []Vulnerability {
 	return vs
 }
 
-func (c *Clair) analyzeLayer(layer docker.FsLayer) ([]Vulnerability, error) {
-	url := fmt.Sprintf("%s/v1/layers/%s?vulnerabilities", c.url, layer.BlobSum)
-	response, err := http.Get(url)
+func (c *Clair) analyzeLayer(layerName string) ([]Vulnerability, error) {
+	url := fmt.Sprintf("%s/v1/layers/%s?vulnerabilities", c.url, layerName)
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Can't create an analyze request: %s", err)
+	}
+	utils.DumpRequest(request)
+	response, err := c.client.Do(request)
 	if err != nil {
 		return nil, err
 	}
+	utils.DumpResponse(response)
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
 		body, _ := ioutil.ReadAll(response.Body)
@@ -169,11 +181,12 @@ func (c *Clair) pushLayer(layer *layer) error {
 		return fmt.Errorf("Can't create a push request: %s", err)
 	}
 	request.Header.Set("Content-Type", "application/json")
-	//fmt.Printf("Pushing layer %v\n", layer)
-	response, err := (&http.Client{Timeout: time.Minute}).Do(request)
+	utils.DumpRequest(request)
+	response, err := c.client.Do(request)
 	if err != nil {
 		return fmt.Errorf("Can't push layer to Clair: %s", err)
 	}
+	utils.DumpResponse(response)
 	defer response.Body.Close()
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
