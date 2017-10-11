@@ -116,9 +116,11 @@ func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) 
 			}
 			part := qname[start:i]
 			start = i + 1
+
 			switch state {
 			case stateInitial:
-				if part == "localhost" || strings.Contains(part, ".") {
+                if part == "localhost" || strings.Contains(part, ".") || string(qname[i]) == ":" {
+
 					// it's registry, let's check what's next =port of image name
 					registry = part
 					if c == ':' {
@@ -187,6 +189,11 @@ func (i *Image) Pull() error {
 		return err
 	}
 	defer resp.Body.Close()
+    if resp.StatusCode == http.StatusNotFound {
+        fmt.Fprintln(os.Stderr, "Image not found")
+        os.Exit(1)
+    }
+
 	if resp.StatusCode == http.StatusUnauthorized {
 		i.Token, err = i.requestToken(resp)
 		io.Copy(ioutil.Discard, resp.Body)
