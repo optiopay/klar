@@ -1,4 +1,4 @@
-FROM alpine
+FROM scratch
 
 ENV DOMAIN=skydns.local
 ENV RELEASE 0.1
@@ -9,7 +9,7 @@ COPY assets/zoneinfo.zip /
 # Required for SSL
 COPY assets/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
 
-COPY klar /klar
+COPY klar /
 
 ENTRYPOINT ["/klar"]
 CMD [""]
