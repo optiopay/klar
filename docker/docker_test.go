@@ -27,6 +27,12 @@ func TestNewImage(t *testing.T) {
 			name:     "nginx",
 			tag:      "1b29e1531c",
 		},
+		"not_qualified": {
+			image:    "registry:5000/nginx:1b29e1531c",
+			registry: "https://registry:5000/v2",
+			name:     "nginx",
+			tag:      "1b29e1531c",
+		},
 		"regular_extended": {
 			image:    "docker-registry.domain.com/skynetservices/skydns:2.3",
 			registry: "https://docker-registry.domain.com/v2",
