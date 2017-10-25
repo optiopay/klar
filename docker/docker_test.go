@@ -58,6 +58,12 @@ func TestNewImage(t *testing.T) {
 			name:     "skynetservices/skydns",
 			tag:      "2.3",
 		},
+        "no_registry_no_tag": {
+			image:    "skynetservices/skydns",
+			registry: "https://registry-1.docker.io/v2",
+			name:     "skynetservices/skydns",
+			tag:      "latest",
+		},
 		"no_registry_root": {
 			image:    "postgres:9.5.1",
 			registry: "https://registry-1.docker.io/v2",
@@ -68,6 +74,18 @@ func TestNewImage(t *testing.T) {
 			image:    "postgres@sha256:f6a2b81d981ace74aeafb2ed2982d52984d82958bfe836b82cbe4bf1ba440999",
 			registry: "https://registry-1.docker.io/v2",
 			name:     "library/postgres",
+			tag:      "sha256:f6a2b81d981ace74aeafb2ed2982d52984d82958bfe836b82cbe4bf1ba440999",
+		},
+        "digest_with_registry": {
+			image:    "registry:8000/postgres@sha256:f6a2b81d981ace74aeafb2ed2982d52984d82958bfe836b82cbe4bf1ba440999",
+			registry: "https://registry:8000/v2",
+			name:     "postgres",
+			tag:      "sha256:f6a2b81d981ace74aeafb2ed2982d52984d82958bfe836b82cbe4bf1ba440999",
+		},
+        "digest_with_localhost_registry": {
+			image:    "localhost/postgres@sha256:f6a2b81d981ace74aeafb2ed2982d52984d82958bfe836b82cbe4bf1ba440999",
+			registry: "https://localhost/v2",
+			name:     "postgres",
 			tag:      "sha256:f6a2b81d981ace74aeafb2ed2982d52984d82958bfe836b82cbe4bf1ba440999",
 		},
 		"localhost_no_tag": {
