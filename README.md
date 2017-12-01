@@ -9,6 +9,9 @@ Klar serves as a client which coordinates the image checks between the Docker re
 
 The simples way is to download the latest relase (for OSX and Linux) from https://github.com/optiopay/klar/releases/ and put the binary in a folder in your `PATH`, make sure it has execute permission
 
+Clair API V3 support is in beta, if you need it use https://github.com/optiopay/klar/releases/tag/v2.0-beta1
+Otherwise use the latest stable version https://github.com/optiopay/klar/releases/tag/v1.5
+
 ## Installation from source code
 
 Make sure you have Go language compiler installed and configured https://golang.org/doc/install
