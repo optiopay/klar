@@ -111,13 +111,14 @@ func main() {
 		c := clair.NewClair(clairAddr, ver)
 		vs, err = c.Analyse(image)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to analyze using API V%d: %s", ver, err)
+			fmt.Fprintf(os.Stderr, "Failed to analyze using API v%d: %s\n", ver, err)
 		} else {
+			fmt.Printf("Got results from Clair API v%d\n", ver)
 			break
 		}
 	}
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "failed to analyze, exiting")
+		fmt.Fprintln(os.Stderr, "Failed to analyze, exiting")
 		os.Exit(2)
 	}
 

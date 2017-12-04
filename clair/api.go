@@ -52,12 +52,10 @@ func newAPIV3(url string) (*apiV3, error) {
 		runes := []rune(url)
 		url = string(runes[i+3:])
 	}
-	fmt.Printf("URL: %q\n", url)
 	conn, err := grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
 		return nil, fmt.Errorf("did not connect to %s: %v", url, err)
 	}
-	fmt.Println("Created GRPC client")
 	return &apiV3{clairpb.NewAncestryServiceClient(conn)}, nil
 }
 
@@ -137,7 +135,6 @@ func (a *apiV1) Analyze(image *docker.Image) ([]*Vulnerability, error) {
 }
 
 func (a *apiV3) Push(image *docker.Image) error {
-	fmt.Println("grpc push image")
 	req := &clairpb.PostAncestryRequest{
 		Format:       "Docker",
 		AncestryName: image.Name,
@@ -148,12 +145,8 @@ func (a *apiV3) Push(image *docker.Image) error {
 		ls[i] = newLayerV3(image, i)
 	}
 	req.Layers = ls
-	resp, err := a.client.PostAncestry(context.Background(), req)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("grpc resp: %v", resp)
-	return nil
+	_, err := a.client.PostAncestry(context.Background(), req)
+	return err
 }
 
 func newLayerV3(image *docker.Image, index int) *clairpb.PostAncestryRequest_PostLayer {
