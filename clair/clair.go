@@ -193,6 +193,9 @@ func (c *Clair) pushLayer(layer *layer) error {
 		return fmt.Errorf("Can't read clair response : %s", err)
 	}
 	if response.StatusCode != http.StatusCreated {
+		if response.StatusCode == http.StatusNotFound {
+			fmt.Fprintf(os.Stderr, "Can't find Clair v1.x or 2.x, probably you use unsupported version - v3.x or custom build.\n")
+		}
 		var lerr layerError
 		err = json.Unmarshal(body, &lerr)
 		if err != nil {
