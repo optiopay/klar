@@ -8,7 +8,7 @@ import (
 	"github.com/optiopay/klar/docker"
 )
 
-const EMPTY_LAYER_BLOB_SUM = "sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4"
+const emptyLayerBlobSum = "sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4"
 
 // Clair is representation of Clair server
 type Clair struct {
@@ -16,6 +16,7 @@ type Clair struct {
 	api API
 }
 
+// API interface allows to use different Clair API verions
 type API interface {
 	Analyze(image *docker.Image) ([]*Vulnerability, error)
 	Push(image *docker.Image) error
@@ -52,7 +53,7 @@ type Vulnerability struct {
 	Metadata      map[string]interface{} `json:"Metadata,omitempty"`
 	FixedBy       string                 `json:"FixedBy,omitempty"`
 	FixedIn       []feature              `json:"FixedIn,omitempty"`
-	FeatureName   string                 `json:"featureName",omitempty`
+	FeatureName   string                 `json:"FeatureName,omitempty"`
 }
 
 type layerError struct {
@@ -96,7 +97,7 @@ func newLayer(image *docker.Image, index int) *layer {
 
 func filterEmptyLayers(fsLayers []docker.FsLayer) (filteredLayers []docker.FsLayer) {
 	for _, layer := range fsLayers {
-		if layer.BlobSum != EMPTY_LAYER_BLOB_SUM {
+		if layer.BlobSum != emptyLayerBlobSum {
 			filteredLayers = append(filteredLayers, layer)
 		}
 	}
@@ -110,17 +111,17 @@ func (c *Clair) Analyse(image *docker.Image) ([]*Vulnerability, error) {
 	image.FsLayers = filterEmptyLayers(image.FsLayers)
 	layerLength := len(image.FsLayers)
 	if layerLength == 0 {
-		fmt.Fprintf(os.Stderr, "no need to analyse image %s/%s:%s as there is no non-emtpy layer\n",
+		fmt.Fprintf(os.Stderr, "no need to analyse image %s/%s:%s as there is no non-emtpy layer",
 			image.Registry, image.Name, image.Tag)
 		return nil, nil
 	}
 
 	if err := c.api.Push(image); err != nil {
-		return nil, fmt.Errorf("push image %s/%s:%s to Clair failed: %s\n", image.Registry, image.Name, image.Tag, err.Error())
+		return nil, fmt.Errorf("push image %s/%s:%s to Clair failed: %s", image.Registry, image.Name, image.Tag, err.Error())
 	}
 	vs, err := c.api.Analyze(image)
 	if err != nil {
-		return nil, fmt.Errorf("analyse image %s/%s:%s failed: %s\n", image.Registry, image.Name, image.Tag, err.Error())
+		return nil, fmt.Errorf("analyse image %s/%s:%s failed: %s", image.Registry, image.Name, image.Tag, err.Error())
 	}
 
 	return vs, nil

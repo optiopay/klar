@@ -130,7 +130,10 @@ func main() {
 			output.Vulnerabilities[sev] = store[sev]
 		})
 		enc := json.NewEncoder(os.Stdout)
-		enc.Encode(output)
+		if err := enc.Encode(output); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to encode JSON: %s", err)
+			os.Exit(2)
+		}
 	} else {
 		fmt.Printf("Found %d vulnerabilities\n", len(vs))
 		iteratePriorities(clairOutput, func(sev string) {

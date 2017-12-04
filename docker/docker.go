@@ -36,12 +36,14 @@ type Image struct {
 	schemaVersion int
 }
 
+// LayerName returns a unique name for the layer
 func (i *Image) LayerName(index int) string {
 	s := fmt.Sprintf("%s%s", trimDigest(i.digest),
 		trimDigest(i.FsLayers[index].BlobSum))
 	return s
 }
 
+// AnalyzedLayerName returns a name of layer to be analyzed using  API V1
 func (i *Image) AnalyzedLayerName() string {
 	index := len(i.FsLayers) - 1
 	if i.schemaVersion == 1 {
@@ -112,7 +114,7 @@ func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) 
 		if c == ':' || c == '/' || c == '@' || i == len(qname)-1 {
 			if i == len(qname)-1 {
 				// ignore a separator, include the last symbol
-				i += 1
+				i++
 			}
 			part := qname[start:i]
 			start = i + 1
@@ -189,7 +191,10 @@ func (i *Image) Pull() error {
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusUnauthorized {
 		i.Token, err = i.requestToken(resp)
-		io.Copy(ioutil.Discard, resp.Body)
+		if err != nil {
+			return err
+		}
+		_, err = io.Copy(ioutil.Discard, resp.Body)
 		if err != nil {
 			return err
 		}
@@ -206,30 +211,30 @@ func (i *Image) Pull() error {
 func parseImageResponse(resp *http.Response, image *Image) error {
 	contentType := resp.Header.Get("Content-Type")
 	if contentType == "application/vnd.docker.distribution.manifest.v2+json" {
-		var imageV2 imageV2
-		if err := json.NewDecoder(resp.Body).Decode(&imageV2); err != nil {
+		var imV2 imageV2
+		if err := json.NewDecoder(resp.Body).Decode(&imV2); err != nil {
 			fmt.Fprintln(os.Stderr, "Image V2 decode error")
 			return err
 		}
-		image.FsLayers = make([]FsLayer, len(imageV2.Layers))
-		for i := range imageV2.Layers {
-			image.FsLayers[i].BlobSum = imageV2.Layers[i].Digest
+		image.FsLayers = make([]FsLayer, len(imV2.Layers))
+		for i := range imV2.Layers {
+			image.FsLayers[i].BlobSum = imV2.Layers[i].Digest
 		}
-		image.digest = imageV2.Config.Digest
-		image.schemaVersion = imageV2.SchemaVersion
+		image.digest = imV2.Config.Digest
+		image.schemaVersion = imV2.SchemaVersion
 	} else {
-		var imageV1 imageV1
-		if err := json.NewDecoder(resp.Body).Decode(&imageV1); err != nil {
+		var imV1 imageV1
+		if err := json.NewDecoder(resp.Body).Decode(&imV1); err != nil {
 			fmt.Fprintln(os.Stderr, "ImageV1 decode error")
 			return err
 		}
-		image.FsLayers = make([]FsLayer, len(imageV1.FsLayers))
+		image.FsLayers = make([]FsLayer, len(imV1.FsLayers))
 		// in schemaVersion 1 layers are in reverse order, so we save them in the same order as v2
 		// base layer is the first
-		for i := range imageV1.FsLayers {
-			image.FsLayers[len(imageV1.FsLayers)-1-i].BlobSum = imageV1.FsLayers[i].BlobSum
+		for i := range imV1.FsLayers {
+			image.FsLayers[len(imV1.FsLayers)-1-i].BlobSum = imV1.FsLayers[i].BlobSum
 		}
-		image.schemaVersion = imageV1.SchemaVersion
+		image.schemaVersion = imV1.SchemaVersion
 	}
 	return nil
 }
@@ -260,7 +265,7 @@ func (i *Image) requestToken(resp *http.Response) (string, error) {
 	}
 	tResp, err := i.client.Do(req)
 	if err != nil {
-		io.Copy(ioutil.Discard, tResp.Body)
+		_, err = io.Copy(ioutil.Discard, tResp.Body)
 		return "", err
 	}
 

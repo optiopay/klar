@@ -106,6 +106,9 @@ func TestPullManifestSchemaV1(t *testing.T) {
 	defer ts.Close()
 
 	image, err := NewImage("docker-registry.domain.com/nginx:1b29e1531c", "", "", false, false)
+	if err != nil {
+		t.Fatalf("new image failed: %s", err)
+	}
 	image.Registry = ts.URL
 	err = image.Pull()
 	if err != nil {
@@ -128,6 +131,9 @@ func TestPullManifestSchemaV2(t *testing.T) {
 	defer ts.Close()
 
 	image, err := NewImage("docker-registry.domain.com/nginx:1b29e1531c", "", "", false, false)
+	if err != nil {
+		t.Fatalf("new image failed: %s", err)
+	}
 	image.Registry = ts.URL
 	err = image.Pull()
 	if err != nil {

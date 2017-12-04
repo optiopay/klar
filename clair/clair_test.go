@@ -78,9 +78,9 @@ var dockerImage = &docker.Image{
 	Name:     imageName,
 	Tag:      imageTag,
 	FsLayers: []docker.FsLayer{
-		{layerHash},
-		{emptyLayerHash},
-		{layerHash},
+		{BlobSum: layerHash},
+		{BlobSum: emptyLayerHash},
+		{BlobSum: layerHash},
 	},
 	Token: imageToken,
 }
