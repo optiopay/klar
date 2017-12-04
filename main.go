@@ -28,9 +28,6 @@ func main() {
 
 	if os.Getenv("KLAR_TRACE") != "" {
 		utils.Trace = true
-		os.Setenv("GRPC_TRACE", "all")
-		os.Setenv("GRPC_VERBOSITY", "DEBUG")
-		os.Setenv("GODEBUG", "http2debug=2")
 	}
 
 	clairAddr := os.Getenv("CLAIR_ADDR")

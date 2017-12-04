@@ -1,14 +1,20 @@
 package clair
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
+	"github.com/coreos/clair/api/v3/clairpb"
 	"github.com/optiopay/klar/docker"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -67,21 +73,21 @@ func clairServerhandler(t *testing.T) http.HandlerFunc {
 	})
 }
 
-func TestAnalyse(t *testing.T) {
+var dockerImage = &docker.Image{
+	Registry: imageRegistry,
+	Name:     imageName,
+	Tag:      imageTag,
+	FsLayers: []docker.FsLayer{
+		{layerHash},
+		{emptyLayerHash},
+		{layerHash},
+	},
+	Token: imageToken,
+}
+
+func TestAnalyseV1(t *testing.T) {
 	ts := httptest.NewServer(clairServerhandler(t))
 	defer ts.Close()
-
-	dockerImage := &docker.Image{
-		Registry: imageRegistry,
-		Name:     imageName,
-		Tag:      imageTag,
-		FsLayers: []docker.FsLayer{
-			{layerHash},
-			{emptyLayerHash},
-			{layerHash},
-		},
-		Token: imageToken,
-	}
 
 	c := NewClair(ts.URL, 1)
 	vs, err := c.Analyse(dockerImage)
@@ -90,5 +96,72 @@ func TestAnalyse(t *testing.T) {
 	}
 	if len(vs) != 1 {
 		t.Fatalf("Expected 1 vulnerability, got %d", len(vs))
+	}
+}
+
+const gAddr = "localhost:60801"
+
+type gServer struct{}
+
+func startGServer() {
+	lis, err := net.Listen("tcp", gAddr)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	s := grpc.NewServer()
+	clairpb.RegisterAncestryServiceServer(s, &gServer{})
+
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+}
+
+func TestMain(m *testing.M) {
+	go startGServer()
+	os.Exit(m.Run())
+}
+
+func (s *gServer) PostAncestry(ctx context.Context, in *clairpb.PostAncestryRequest) (*clairpb.PostAncestryResponse, error) {
+	return &clairpb.PostAncestryResponse{}, nil
+}
+
+func (s *gServer) GetAncestry(ctx context.Context, in *clairpb.GetAncestryRequest) (*clairpb.GetAncestryResponse, error) {
+	return &clairpb.GetAncestryResponse{
+		Ancestry: &clairpb.Ancestry{
+			Name: in.GetAncestryName(),
+			Features: []*clairpb.Feature{
+				{
+					Name:          "coreutils",
+					NamespaceName: "debian:8",
+					Version:       "8.23-4",
+					Vulnerabilities: []*clairpb.Vulnerability{
+						{
+
+							Name:          "CVE-2014-9471",
+							NamespaceName: "debian:8",
+							Description:   "The parse_datetime function in GNU coreutils ...",
+							Link:          "https://security-tracker.debian.org/tracker/CVE-2014-9471",
+							Severity:      "Low",
+							FixedBy:       "9.23-5",
+						},
+					},
+				},
+			},
+		},
+	}, nil
+}
+
+func TestAnalyseV3(t *testing.T) {
+	c := NewClair(gAddr, 3)
+	vs, err := c.Analyse(dockerImage)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(vs) != 1 {
+		t.Fatalf("Expected 1 vulnerability, got %d", len(vs))
+	}
+	if vs[0].Name != "CVE-2014-9471" {
+		t.Errorf("unexpected vulnerability name: %s", vs[0].Name)
 	}
 }
