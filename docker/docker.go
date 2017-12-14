@@ -104,67 +104,38 @@ func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) 
 	}
 	registry := dockerHub
 	tag := "latest"
-	var nameParts, tagParts []string
-	var name, port string
-	state := stateInitial
-	start := 0
-	for i, c := range qname {
-		if c == ':' || c == '/' || c == '@' || i == len(qname)-1 {
-			if i == len(qname)-1 {
-				// ignore a separator, include the last symbol
-				i += 1
-			}
-			part := qname[start:i]
-			start = i + 1
+	var name string
 
-			switch state {
-			case stateInitial:
-				if part == "localhost" || strings.Contains(part, ".") || (string(qname[i]) == ":" && strings.Contains(qname, "/")) {
-
-					// it's registry, let's check what's next =port of image name
-					registry = part
-					if c == ':' {
-						state = statePort
-					} else {
-						state = stateName
-					}
-				} else {
-					// it's an image name, if separator is /
-					// next part is also part of the name
-					// othrewise it's an offcial image
-					if c == '/' {
-						// we got just a part of name, till next time
-						start = 0
-						state = stateName
-					} else {
-						state = stateTag
-						name = fmt.Sprintf("library/%s", part)
-					}
-				}
-			case stateTag:
-				tag = ""
-				tagParts = append(tagParts, part)
-			case statePort:
-				state = stateName
-				port = part
-			case stateName:
-				if c == ':' || c == '@' {
-					state = stateTag
-				}
-				nameParts = append(nameParts, part)
+	if !utils.ImageOnlyRegexp.MatchString(string(qname)) || strings.HasPrefix(qname, "localhost/") {
+		registry = utils.DomainRegexp.FindString(string(qname))
+		imageAndTag := utils.ImageRegexp.FindStringSubmatch(string(qname))
+		result := make(map[string]string)
+		for i, name := range utils.ImageRegexp.SubexpNames() {
+			if i != 0 {
+				result[name] = imageAndTag[i]
 			}
+		}
+		name = result["name"]
+		if len(result["tag"]) > 0 {
+			tag = result["tag"]
+		}
+	} else {
+		imageAndTag := utils.ImageNoRegistryRegexp.FindStringSubmatch(string(qname))
+		result := make(map[string]string)
+		for i, name := range utils.ImageRegexp.SubexpNames() {
+			if i != 0 {
+				result[name] = imageAndTag[i]
+			}
+		}
+		name = result["name"]
+		if !strings.Contains(name, "/") {
+			name = "library/" + name
+		}
+		if len(result["tag"]) > 0 {
+			tag = result["tag"]
 		}
 	}
 
-	if port != "" {
-		registry = fmt.Sprintf("%s:%s", registry, port)
-	}
-	if name == "" {
-		name = strings.Join(nameParts, "/")
-	}
-	if tag == "" {
-		tag = strings.Join(tagParts, ":")
-	}
 	if insecureRegistry {
 		registry = fmt.Sprintf("http://%s/v2", registry)
 	} else {
