@@ -1,25 +1,24 @@
 package clair
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/optiopay/klar/docker"
-	"github.com/optiopay/klar/utils"
 )
 
 const EMPTY_LAYER_BLOB_SUM = "sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4"
 
 // Clair is representation of Clair server
 type Clair struct {
-	url    string
-	client http.Client
+	url string
+	api API
+}
+
+type API interface {
+	Analyze(image *docker.Image) ([]*Vulnerability, error)
+	Push(image *docker.Image) error
 }
 
 type layer struct {
@@ -53,6 +52,7 @@ type Vulnerability struct {
 	Metadata      map[string]interface{} `json:"Metadata,omitempty"`
 	FixedBy       string                 `json:"FixedBy,omitempty"`
 	FixedIn       []feature              `json:"FixedIn,omitempty"`
+	FeatureName   string                 `json:"featureName",omitempty`
 }
 
 type layerError struct {
@@ -70,18 +70,13 @@ type layerEnvelope struct {
 
 // NewClair construct Clair entity using potentially incomplete server URL
 // If protocol is missing HTTP will be used. If port is missing 6060 will be used
-func NewClair(url string) Clair {
-	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-		url = fmt.Sprintf("http://%s", url)
-	}
-	if strings.LastIndex(url, ":") < 5 {
-		url = fmt.Sprintf("%s:6060", url)
-	}
-	client := http.Client{
-		Timeout: time.Minute,
+func NewClair(url string, version int) Clair {
+	api, err := newAPI(url, version)
+	if err != nil {
+		panic(fmt.Sprintf("cant't create API client version %d %s: %s", version, url, err))
 	}
 
-	return Clair{url, client}
+	return Clair{url, api}
 }
 
 func newLayer(image *docker.Image, index int) *layer {
@@ -110,96 +105,23 @@ func filterEmptyLayers(fsLayers []docker.FsLayer) (filteredLayers []docker.FsLay
 
 // Analyse sent each layer from Docker image to Clair and returns
 // a list of found vulnerabilities
-func (c *Clair) Analyse(image *docker.Image) []Vulnerability {
+func (c *Clair) Analyse(image *docker.Image) ([]*Vulnerability, error) {
 	// Filter the empty layers in image
 	image.FsLayers = filterEmptyLayers(image.FsLayers)
 	layerLength := len(image.FsLayers)
 	if layerLength == 0 {
-		fmt.Fprintf(os.Stderr, "No need to analyse image %s/%s:%s as there is no non-emtpy layer\n",
+		fmt.Fprintf(os.Stderr, "no need to analyse image %s/%s:%s as there is no non-emtpy layer\n",
 			image.Registry, image.Name, image.Tag)
-		return nil
+		return nil, nil
 	}
 
-	var vs []Vulnerability
-	for i := 0; i < layerLength; i++ {
-		layer := newLayer(image, i)
-		err := c.pushLayer(layer)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Push layer %d failed: %s\n", i, err.Error())
-			continue
-		}
+	if err := c.api.Push(image); err != nil {
+		return nil, fmt.Errorf("push image %s/%s:%s to Clair failed: %s\n", image.Registry, image.Name, image.Tag, err.Error())
 	}
-
-	vs, err := c.analyzeLayer(image.AnalyzedLayerName())
+	vs, err := c.api.Analyze(image)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Analyse image %s/%s:%s failed: %s\n", image.Registry, image.Name, image.Tag, err.Error())
-		return nil
+		return nil, fmt.Errorf("analyse image %s/%s:%s failed: %s\n", image.Registry, image.Name, image.Tag, err.Error())
 	}
 
-	return vs
-}
-
-func (c *Clair) analyzeLayer(layerName string) ([]Vulnerability, error) {
-	url := fmt.Sprintf("%s/v1/layers/%s?vulnerabilities", c.url, layerName)
-	request, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("Can't create an analyze request: %s", err)
-	}
-	utils.DumpRequest(request)
-	response, err := c.client.Do(request)
-	if err != nil {
-		return nil, err
-	}
-	utils.DumpResponse(response)
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		body, _ := ioutil.ReadAll(response.Body)
-		return nil, fmt.Errorf("Analyze error %d: %s", response.StatusCode, string(body))
-	}
-	var envelope layerEnvelope
-	if err = json.NewDecoder(response.Body).Decode(&envelope); err != nil {
-		return nil, err
-	}
-	var vs []Vulnerability
-	for _, f := range envelope.Layer.Features {
-		for _, v := range f.Vulnerabilities {
-			vs = append(vs, v)
-		}
-	}
 	return vs, nil
-}
-
-func (c *Clair) pushLayer(layer *layer) error {
-	envelope := layerEnvelope{Layer: layer}
-	reqBody, err := json.Marshal(envelope)
-	if err != nil {
-		return fmt.Errorf("can't serialze push request: %s", err)
-	}
-	url := fmt.Sprintf("%s/v1/layers", c.url)
-	request, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
-	if err != nil {
-		return fmt.Errorf("Can't create a push request: %s", err)
-	}
-	request.Header.Set("Content-Type", "application/json")
-	utils.DumpRequest(request)
-	response, err := c.client.Do(request)
-	if err != nil {
-		return fmt.Errorf("Can't push layer to Clair: %s", err)
-	}
-	utils.DumpResponse(response)
-	defer response.Body.Close()
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return fmt.Errorf("Can't read clair response : %s", err)
-	}
-	if response.StatusCode != http.StatusCreated {
-		var lerr layerError
-		err = json.Unmarshal(body, &lerr)
-		if err != nil {
-			return fmt.Errorf("Can't even read an error message: %s", err)
-		}
-		return fmt.Errorf("Push error %d: %s", response.StatusCode, string(body))
-	}
-	return nil
-
 }

@@ -14,11 +14,11 @@ import (
 
 type jsonOutput struct {
 	LayerCount      int
-	Vulnerabilities map[string][]clair.Vulnerability
+	Vulnerabilities map[string][]*clair.Vulnerability
 }
 
 var priorities = []string{"Unknown", "Negligible", "Low", "Medium", "High", "Critical", "Defcon1"}
-var store = make(map[string][]clair.Vulnerability)
+var store = make(map[string][]*clair.Vulnerability)
 
 func main() {
 	if len(os.Args) != 2 {
@@ -92,7 +92,7 @@ func main() {
 	}
 
 	output := jsonOutput{
-		Vulnerabilities: make(map[string][]clair.Vulnerability),
+		Vulnerabilities: make(map[string][]*clair.Vulnerability),
 	}
 
 	if len(image.FsLayers) == 0 {
@@ -106,8 +106,22 @@ func main() {
 		}
 	}
 
-	c := clair.NewClair(clairAddr)
-	vs := c.Analyse(image)
+	var vs []*clair.Vulnerability
+	for _, ver := range []int{1, 3} {
+		c := clair.NewClair(clairAddr, ver)
+		vs, err = c.Analyse(image)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to analyze using API v%d: %s\n", ver, err)
+		} else {
+			fmt.Printf("Got results from Clair API v%d\n", ver)
+			break
+		}
+	}
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to analyze, exiting")
+		os.Exit(2)
+	}
+
 	groupBySeverity(vs)
 	vsNumber := 0
 
@@ -123,7 +137,7 @@ func main() {
 		iteratePriorities(clairOutput, func(sev string) {
 			vsNumber += len(store[sev])
 			for _, v := range store[sev] {
-				fmt.Printf("%s: [%s] \n%s\n%s\n", v.Name, v.Severity, v.Description, v.Link)
+				fmt.Printf("%s: [%s] \nFound in: %s\n%s\n%s\n", v.Name, v.Severity, v.FeatureName, v.Description, v.Link)
 				fmt.Println("-----------------------------------------")
 			}
 		})
@@ -150,20 +164,19 @@ func iteratePriorities(output string, f func(sev string)) {
 			f(sev)
 		}
 	}
-
 }
 
-func groupBySeverity(vs []clair.Vulnerability) {
+func groupBySeverity(vs []*clair.Vulnerability) {
 	for _, v := range vs {
 		sevRow := vulnsBy(v.Severity, store)
 		store[v.Severity] = append(sevRow, v)
 	}
 }
 
-func vulnsBy(sev string, store map[string][]clair.Vulnerability) []clair.Vulnerability {
+func vulnsBy(sev string, store map[string][]*clair.Vulnerability) []*clair.Vulnerability {
 	items, found := store[sev]
 	if !found {
-		items = make([]clair.Vulnerability, 0)
+		items = make([]*clair.Vulnerability, 0)
 		store[sev] = items
 	}
 	return items
