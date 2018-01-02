@@ -1,15 +1,12 @@
-FROM scratch
+FROM golang:1.8-alpine as builder
 
-ENV DOMAIN=skydns.local
-ENV RELEASE 0.1
-# Required by golang's time pkg
-ENV ZONE_INFO /zoneinfo.zip
-COPY assets/zoneinfo.zip /
+RUN apk --update add git;
+RUN go get -d github.com/optiopay/klar
+RUN go build ./src/github.com/optiopay/klar
 
-# Required for SSL
-COPY assets/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
+FROM alpine:3.6
 
-COPY klar /
+RUN apk add --no-cache ca-certificates
+COPY --from=builder /go/klar /klar
 
 ENTRYPOINT ["/klar"]
-CMD [""]
