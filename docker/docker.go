@@ -87,6 +87,14 @@ type layer struct {
 	Digest string
 }
 
+type Config struct {
+	ImageName        string
+	User             string
+	Password         string
+	InsecureTLS      bool
+	InsecureRegistry bool
+}
+
 const dockerHub = "registry-1.docker.io"
 
 var tokenRe = regexp.MustCompile(`Bearer realm="(.*?)",service="(.*?)",scope="(.*?)"`)
@@ -94,9 +102,9 @@ var tokenRe = regexp.MustCompile(`Bearer realm="(.*?)",service="(.*?)",scope="(.
 // NewImage parses image name which could be the ful name registry:port/name:tag
 // or in any other shorter forms and creates docker image entity without
 // information about layers
-func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) (*Image, error) {
+func NewImage(conf *Config) (*Image, error) {
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureTLS},
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: conf.InsecureTLS},
 	}
 	client := http.Client{
 		Transport: tr,
@@ -108,13 +116,13 @@ func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) 
 	var name, port string
 	state := stateInitial
 	start := 0
-	for i, c := range qname {
-		if c == ':' || c == '/' || c == '@' || i == len(qname)-1 {
-			if i == len(qname)-1 {
+	for i, c := range conf.ImageName {
+		if c == ':' || c == '/' || c == '@' || i == len(conf.ImageName)-1 {
+			if i == len(conf.ImageName)-1 {
 				// ignore a separator, include the last symbol
 				i += 1
 			}
-			part := qname[start:i]
+			part := conf.ImageName[start:i]
 			start = i + 1
 			switch state {
 			case stateInitial:
@@ -163,7 +171,7 @@ func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) 
 	if tag == "" {
 		tag = strings.Join(tagParts, ":")
 	}
-	if insecureRegistry {
+	if conf.InsecureRegistry {
 		registry = fmt.Sprintf("http://%s/v2", registry)
 	} else {
 		registry = fmt.Sprintf("https://%s/v2", registry)
@@ -173,8 +181,8 @@ func NewImage(qname, user, password string, insecureTLS, insecureRegistry bool) 
 		Registry: registry,
 		Name:     name,
 		Tag:      tag,
-		user:     user,
-		password: password,
+		user:     conf.User,
+		password: conf.Password,
 		client:   client,
 	}, nil
 }
