@@ -22,6 +22,7 @@ type apiV1 struct {
 }
 
 type apiV3 struct {
+	url    string
 	client clairpb.AncestryServiceClient
 }
 
@@ -52,11 +53,16 @@ func newAPIV3(url string) (*apiV3, error) {
 		runes := []rune(url)
 		url = string(runes[i+3:])
 	}
+	if strings.Index(url, ":") == -1 {
+		url = fmt.Sprintf("%s:6060", url)
+	}
 	conn, err := grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
 		return nil, fmt.Errorf("did not connect to %s: %v", url, err)
 	}
-	return &apiV3{clairpb.NewAncestryServiceClient(conn)}, nil
+	return &apiV3{
+		url:    url,
+		client: clairpb.NewAncestryServiceClient(conn)}, nil
 }
 
 func (a *apiV1) Push(image *docker.Image) error {
