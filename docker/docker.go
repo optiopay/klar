@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"strings"
 	"time"
-
 	"github.com/optiopay/klar/utils"
 )
 
@@ -93,9 +92,9 @@ type Config struct {
 	Password         string
 	InsecureTLS      bool
 	InsecureRegistry bool
-}
+	RegistryAddr	 string
 
-const dockerHub = "registry-1.docker.io"
+}
 
 var tokenRe = regexp.MustCompile(`Bearer realm="(.*?)",service="(.*?)",scope="(.*?)"`)
 
@@ -110,7 +109,7 @@ func NewImage(conf *Config) (*Image, error) {
 		Transport: tr,
 		Timeout:   time.Minute,
 	}
-	registry := dockerHub
+	registry := conf.RegistryAddr
 	tag := "latest"
 	var nameParts, tagParts []string
 	var name, port string

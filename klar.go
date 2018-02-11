@@ -5,7 +5,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-
 	"github.com/optiopay/klar/clair"
 	"github.com/optiopay/klar/docker"
 	"github.com/optiopay/klar/utils"
@@ -17,6 +16,7 @@ const (
 	optionKlarTrace        = "KLAR_TRACE"
 	optionClairThreshold   = "CLAIR_THRESHOLD"
 	optionJSONOutput       = "JSON_OUTPUT"
+	optionDockerRegistry   = "DOCKER_REGISTRY"
 	optionDockerUser       = "DOCKER_USER"
 	optionDockerPassword   = "DOCKER_PASSWORD"
 	optionDockerInsecure   = "DOCKER_INSECURE"
@@ -82,6 +82,11 @@ func newConfig(args []string) (*config, error) {
 		return nil, fmt.Errorf("Clair address must be provided\n")
 	}
 
+	registryAddr := os.Getenv(optionDockerRegistry)
+	if registryAddr == "" {
+		return nil, fmt.Errorf("Docker registry must be provided\n")
+	}
+
 	if os.Getenv(optionKlarTrace) != "" {
 		utils.Trace = true
 	}
@@ -90,6 +95,7 @@ func newConfig(args []string) (*config, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &config{
 		ClairAddr:   clairAddr,
 		ClairOutput: clairOutput,
@@ -101,6 +107,8 @@ func newConfig(args []string) (*config, error) {
 			Password:         os.Getenv(optionDockerPassword),
 			InsecureTLS:      parseBoolOption(optionDockerInsecure),
 			InsecureRegistry: parseBoolOption(optionRegistryInsecure),
+			RegistryAddr:     registryAddr,
 		},
+
 	}, nil
 }
