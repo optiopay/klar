@@ -16,7 +16,7 @@ const (
 	optionKlarTrace        = "KLAR_TRACE"
 	optionClairThreshold   = "CLAIR_THRESHOLD"
 	optionJSONOutput       = "JSON_OUTPUT"
-	optionDockerRegistry   = "DOCKER_REGISTRY"
+	optionRegistryAddr     = "REGISTRY_ADDR"
 	optionDockerUser       = "DOCKER_USER"
 	optionDockerPassword   = "DOCKER_PASSWORD"
 	optionDockerInsecure   = "DOCKER_INSECURE"
@@ -82,7 +82,7 @@ func newConfig(args []string) (*config, error) {
 		return nil, fmt.Errorf("Clair address must be provided\n")
 	}
 
-	registryAddr := os.Getenv(optionDockerRegistry)
+	registryAddr := os.Getenv(optionRegistryAddr)
 	if registryAddr == "" {
 		return nil, fmt.Errorf("Docker registry must be provided\n")
 	}
