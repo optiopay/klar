@@ -109,6 +109,5 @@ func newConfig(args []string) (*config, error) {
 			InsecureRegistry: parseBoolOption(optionRegistryInsecure),
 			RegistryAddr:     registryAddr,
 		},
-
 	}, nil
 }

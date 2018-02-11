@@ -92,8 +92,7 @@ type Config struct {
 	Password         string
 	InsecureTLS      bool
 	InsecureRegistry bool
-	RegistryAddr	 string
-
+	RegistryAddr     string
 }
 
 var tokenRe = regexp.MustCompile(`Bearer realm="(.*?)",service="(.*?)",scope="(.*?)"`)
