@@ -1,12 +1,11 @@
-FROM golang:1.8-alpine as builder
+FROM golang:1.8-alpine
 
-RUN apk --update add git;
-RUN go get -d github.com/optiopay/klar
-RUN go build ./src/github.com/optiopay/klar
+COPY . .
 
-FROM alpine:3.6
-
-RUN apk add --no-cache ca-certificates
-COPY --from=builder /go/klar /klar
+RUN apk --update add git && \
+  apk add --no-cache ca-certificates && \
+  mv vendor/* src && \
+  go build -o klar . && \
+  cp klar /
 
 ENTRYPOINT ["/klar"]

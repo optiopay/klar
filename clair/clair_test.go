@@ -13,7 +13,7 @@ import (
 	"testing"
 
 	"github.com/coreos/clair/api/v3/clairpb"
-	"github.com/optiopay/klar/docker"
+	"../docker"
 	"google.golang.org/grpc"
 )
 

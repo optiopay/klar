@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/optiopay/klar/utils"
+	"../utils"
 )
 
 const (
@@ -108,7 +108,7 @@ func NewImage(conf *Config) (*Image, error) {
 	}
 	client := http.Client{
 		Transport: tr,
-		Timeout:   time.Minute,
+		Timeout:   time.Hour,
 	}
 	registry := dockerHub
 	tag := "latest"

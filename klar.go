@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/optiopay/klar/clair"
-	"github.com/optiopay/klar/docker"
-	"github.com/optiopay/klar/utils"
+	"./clair"
+	"./docker"
+	"./utils"
 )
 
 const (
