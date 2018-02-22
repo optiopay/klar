@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/coreos/clair/api/v3/clairpb"
-	"github.com/optiopay/klar/docker"
-	"github.com/optiopay/klar/utils"
+	"../docker"
+	"../utils"
 	"google.golang.org/grpc"
 )
 
@@ -43,7 +43,7 @@ func newAPIV1(url string) *apiV1 {
 	return &apiV1{
 		url: url,
 		client: http.Client{
-			Timeout: time.Minute,
+			Timeout: time.Hour,
 		},
 	}
 }
