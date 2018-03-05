@@ -50,6 +50,10 @@ Usage:
 
     CLAIR_ADDR=http://localhost CLAIR_OUTPUT=High CLAIR_THRESHOLD=10 DOCKER_USER=me DOCKER_PASSWORD=secret klar postgres:9.5.1
 
+### Debug Output
+You can enable more verbose output but setting `KLAR_TRACE` to true.
+* run `export KLAR_TRACE=true` to persist between runs.
+
 ## Dockerized version
 
 Klar can be dockerized. Go to `$GOPATH/src/github.com/optiopay/klar` and build Klar in project root. If you are on Linux:
