@@ -57,7 +57,9 @@ func main() {
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to analyze using API v%d: %s\n", ver, err)
 		} else {
-			fmt.Printf("Got results from Clair API v%d\n", ver)
+			if !conf.JSONOutput {
+				fmt.Printf("Got results from Clair API v%d\n", ver)
+			}
 			break
 		}
 	}
