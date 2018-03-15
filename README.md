@@ -7,7 +7,7 @@ Klar serves as a client which coordinates the image checks between the Docker re
 
 ## Binary installation
 
-The simples way is to download the latest relase (for OSX and Linux) from https://github.com/optiopay/klar/releases/ and put the binary in a folder in your `PATH`, make sure it has execute permission
+The simplest way is to download the latest release (for OSX and Linux) from https://github.com/optiopay/klar/releases/ and put the binary in a folder in your `PATH` (make sure it has execute permission).
 
 ## Installation from source code
 
@@ -22,18 +22,17 @@ make sure your Go binary folder is in your `PATH` (e.g. `export PATH=$PATH:/usr/
 
 ## Usage
 
-Klar process returns `0` if number of detected high severity vulnerabilities in an image is less or equals than threshold (see below), otherwise it returns `1`.
+Klar process returns `0` if the number of detected high severity vulnerabilities in an image is less than or equal to a threshold (see below), otherwise it returns `1`.
 
 Klar can be configured via the following environment variables:
 
-* `CLAIR_ADDR` - address of Clair server, the most complete form is `protocol://host:port`
-protocol and port may be omited, `http` and `6060` are used by default.
+* `CLAIR_ADDR` - address of Clair server. The most complete form is `protocol://host:port` - `protocol` and `port` default to `http` and `6060` respectfully and may be omitted.
 
 * `CLAIR_OUTPUT` - severity level threshold, vulnerabilities with severity level higher than or equal to this threshold
 will be outputted. Supported levels are `Unknown`, `Negligible`, `Low`, `Medium`, `High`, `Critical`, `Defcon1`.
 Default is `Unknown`.
 
-* `CLAIR_THRESHOLD` - how many outputted vulnerabilities Klar can tolerate before returning `1`. Default is 0.
+* `CLAIR_THRESHOLD` - how many outputted vulnerabilities Klar can tolerate before returning `1`. Default is `0`.
 
 * `DOCKER_USER` - Docker registry account name.
 
@@ -48,7 +47,7 @@ need to be booted with `-insecure-tls` for this to work.
 
 Usage:
 
-    CLAIR_ADDR=http://localhost CLAIR_OUTPUT=High CLAIR_THRESHOLD=10 DOCKER_USER=me DOCKER_PASSWORD=secret klar postgres:9.5.1
+    CLAIR_ADDR=localhost CLAIR_OUTPUT=High CLAIR_THRESHOLD=10 DOCKER_USER=docker DOCKER_PASSWORD=secret klar postgres:9.5.1
 
 ### Debug Output
 You can enable more verbose output but setting `KLAR_TRACE` to true.
@@ -70,10 +69,10 @@ To build Docker image run in the project root (replace `klar` with fully qualifi
 
 Then pass env vars as separate `--env` arguments, or create an env file and pass it as `--env-file` argument. For example save env vars as `my-klar.env`:
 
-    CLAIR_ADDR=http://localhost
+    CLAIR_ADDR=localhost
     CLAIR_OUTPUT=High
     CLAIR_THRESHOLD=10
-    DOCKER_USER=me
+    DOCKER_USER=docker
     DOCKER_PASSWORD=secret
 
 Then run
@@ -83,7 +82,7 @@ Then run
 ## Amazon ECR support
 There is no permanent username/password for Amazon ECR, the credentials must be retrived using `aws ecr get-login` and they are valid for 12 hours. Here is a sample script which may be used to provide Klar with ECR credentials:
 
-    DOCKER_LOGIN=`aws ecr get-login`
+    DOCKER_LOGIN=`aws ecr get-login --no-include-email`
     PASSWORD=`echo $DOCKER_LOGIN | cut -d' ' -f6`
     REGISTRY=`echo $DOCKER_LOGIN | cut -d' ' -f9 | sed "s/https:\/\///"`
     DOCKER_USER=AWS DOCKER_PASSWORD=${PASSWORD} ./klar ${REGISTRY}/my-image
