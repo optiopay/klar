@@ -91,6 +91,7 @@ type Config struct {
 	ImageName        string
 	User             string
 	Password         string
+	Token            string
 	InsecureTLS      bool
 	InsecureRegistry bool
 }
@@ -112,6 +113,7 @@ func NewImage(conf *Config) (*Image, error) {
 	}
 	registry := dockerHub
 	tag := "latest"
+	token := ""
 	var nameParts, tagParts []string
 	var name, port string
 	state := stateInitial
@@ -176,6 +178,9 @@ func NewImage(conf *Config) (*Image, error) {
 	} else {
 		registry = fmt.Sprintf("https://%s/v2", registry)
 	}
+	if conf.Token != "" {
+		token = "Basic " + conf.Token
+	}
 
 	return &Image{
 		Registry: registry,
@@ -183,6 +188,7 @@ func NewImage(conf *Config) (*Image, error) {
 		Tag:      tag,
 		user:     conf.User,
 		password: conf.Password,
+		Token:    token,
 		client:   client,
 	}, nil
 }
@@ -196,8 +202,10 @@ func (i *Image) Pull() error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusUnauthorized {
-		i.Token, err = i.requestToken(resp)
-		io.Copy(ioutil.Discard, resp.Body)
+		if i.Token == "" {
+			i.Token, err = i.requestToken(resp)
+			io.Copy(ioutil.Discard, resp.Body)
+		}
 		if err != nil {
 			return err
 		}
@@ -302,6 +310,7 @@ func (i *Image) pullReq() (*http.Response, error) {
 		}
 	} else {
 		req.Header.Set("Authorization", i.Token)
+		i.Token = ""
 	}
 
 	// Prefer manifest schema v2

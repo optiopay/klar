@@ -38,7 +38,9 @@ Default is `Unknown`.
 
 * `DOCKER_PASSWORD` - Docker registry account password.
 
-* `DOCKER_INSECURE` - Allow Klar to access registries with bad SSL certificates. Default is `false`. Clair will 
+* `DOCKER_TOKEN` - Docker registry account token. (Can be used in place of `DOCKER_USER` and `DOCKER_PASSWORD`)
+
+* `DOCKER_INSECURE` - Allow Klar to access registries with bad SSL certificates. Default is `false`. Clair will
 need to be booted with `-insecure-tls` for this to work.
 
 * `REGISTRY_INSECURE` - Allow Klar to access insecure registries (HTTP only). Default is `false`.
