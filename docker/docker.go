@@ -214,8 +214,22 @@ func (i *Image) Pull() error {
 		if err != nil {
 			return err
 		}
+		defer resp.Body.Close()
+		// try one more time by clearing the token to request it
+		if resp.StatusCode == http.StatusUnauthorized {
+			i.Token, err = i.requestToken(resp)
+			io.Copy(ioutil.Discard, resp.Body)
+			if err != nil {
+				return err
+			}
+			// try again
+			resp, err = i.pullReq()
+			if err != nil {
+				return err
+			}
+			defer resp.Body.Close()
+		}
 	}
-	defer resp.Body.Close()
 	return parseImageResponse(resp, i)
 }
 
@@ -310,7 +324,6 @@ func (i *Image) pullReq() (*http.Response, error) {
 		}
 	} else {
 		req.Header.Set("Authorization", i.Token)
-		i.Token = ""
 	}
 
 	// Prefer manifest schema v2
