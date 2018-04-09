@@ -19,6 +19,7 @@ const (
 	optionJSONOutput       = "JSON_OUTPUT"
 	optionDockerUser       = "DOCKER_USER"
 	optionDockerPassword   = "DOCKER_PASSWORD"
+	optionDockerToken      = "DOCKER_TOKEN"
 	optionDockerInsecure   = "DOCKER_INSECURE"
 	optionRegistryInsecure = "REGISTRY_INSECURE"
 )
@@ -99,6 +100,7 @@ func newConfig(args []string) (*config, error) {
 			ImageName:        args[1],
 			User:             os.Getenv(optionDockerUser),
 			Password:         os.Getenv(optionDockerPassword),
+			Token:            os.Getenv(optionDockerToken),
 			InsecureTLS:      parseBoolOption(optionDockerInsecure),
 			InsecureRegistry: parseBoolOption(optionRegistryInsecure),
 		},
