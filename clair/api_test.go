@@ -1,6 +1,9 @@
 package clair
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestNewAPIV1(t *testing.T) {
 	cases := []struct {
@@ -29,7 +32,7 @@ func TestNewAPIV1(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		api := newAPIV1(tc.url)
+		api := newAPIV1(tc.url, time.Minute)
 		if api.url != tc.expected {
 			t.Errorf("expected %s got %s", api.url, tc.expected)
 		}

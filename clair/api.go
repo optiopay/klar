@@ -26,14 +26,14 @@ type apiV3 struct {
 	client clairpb.AncestryServiceClient
 }
 
-func newAPI(url string, version int) (API, error) {
+func newAPI(url string, version int, timeout time.Duration) (API, error) {
 	if version < 3 {
-		return newAPIV1(url), nil
+		return newAPIV1(url, timeout), nil
 	}
 	return newAPIV3(url)
 }
 
-func newAPIV1(url string) *apiV1 {
+func newAPIV1(url string, timeout time.Duration) *apiV1 {
 	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 		url = fmt.Sprintf("http://%s", url)
 	}
@@ -43,7 +43,7 @@ func newAPIV1(url string) *apiV1 {
 	return &apiV1{
 		url: url,
 		client: http.Client{
-			Timeout: time.Minute,
+			Timeout: timeout,
 		},
 	}
 }

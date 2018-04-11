@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/optiopay/klar/docker"
 )
@@ -70,8 +71,8 @@ type layerEnvelope struct {
 
 // NewClair construct Clair entity using potentially incomplete server URL
 // If protocol is missing HTTP will be used. If port is missing 6060 will be used
-func NewClair(url string, version int) Clair {
-	api, err := newAPI(url, version)
+func NewClair(url string, version int, timeout time.Duration) Clair {
+	api, err := newAPI(url, version, timeout)
 	if err != nil {
 		panic(fmt.Sprintf("cant't create API client version %d %s: %s", version, url, err))
 	}

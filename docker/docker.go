@@ -94,6 +94,7 @@ type Config struct {
 	Token            string
 	InsecureTLS      bool
 	InsecureRegistry bool
+	Timeout          time.Duration
 }
 
 const dockerHub = "registry-1.docker.io"
@@ -109,7 +110,7 @@ func NewImage(conf *Config) (*Image, error) {
 	}
 	client := http.Client{
 		Transport: tr,
-		Timeout:   time.Minute,
+		Timeout:   conf.Timeout,
 	}
 	registry := dockerHub
 	tag := "latest"
