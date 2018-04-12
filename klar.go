@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/optiopay/klar/clair"
 	"github.com/optiopay/klar/docker"
@@ -16,6 +17,8 @@ const (
 	optionClairAddress     = "CLAIR_ADDR"
 	optionKlarTrace        = "KLAR_TRACE"
 	optionClairThreshold   = "CLAIR_THRESHOLD"
+	optionClairTimeout     = "CLAIR_TIMEOUT"
+	optionDockerTimeout    = "DOCKER_TIMEOUT"
 	optionJSONOutput       = "JSON_OUTPUT"
 	optionDockerUser       = "DOCKER_USER"
 	optionDockerPassword   = "DOCKER_PASSWORD"
@@ -74,6 +77,7 @@ type config struct {
 	ClairOutput  string
 	Threshold    int
 	JSONOutput   bool
+	ClairTimeout time.Duration
 	DockerConfig docker.Config
 }
 
@@ -91,11 +95,23 @@ func newConfig(args []string) (*config, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	clairTimeout := parseIntOption(optionClairTimeout)
+	if clairTimeout == 0 {
+		clairTimeout = 1
+	}
+
+	dockerTimeout := parseIntOption(optionDockerTimeout)
+	if dockerTimeout == 0 {
+		dockerTimeout = 1
+	}
+
 	return &config{
-		ClairAddr:   clairAddr,
-		ClairOutput: clairOutput,
-		Threshold:   parseIntOption(optionClairThreshold),
-		JSONOutput:  parseBoolOption(optionJSONOutput),
+		ClairAddr:    clairAddr,
+		ClairOutput:  clairOutput,
+		Threshold:    parseIntOption(optionClairThreshold),
+		JSONOutput:   parseBoolOption(optionJSONOutput),
+		ClairTimeout: time.Duration(clairTimeout) * time.Minute,
 		DockerConfig: docker.Config{
 			ImageName:        args[1],
 			User:             os.Getenv(optionDockerUser),
@@ -103,6 +119,7 @@ func newConfig(args []string) (*config, error) {
 			Token:            os.Getenv(optionDockerToken),
 			InsecureTLS:      parseBoolOption(optionDockerInsecure),
 			InsecureRegistry: parseBoolOption(optionRegistryInsecure),
+			Timeout:          time.Duration(dockerTimeout) * time.Minute,
 		},
 	}, nil
 }

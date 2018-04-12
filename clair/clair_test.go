@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/coreos/clair/api/v3/clairpb"
 	"github.com/optiopay/klar/docker"
@@ -89,7 +90,7 @@ func TestAnalyseV1(t *testing.T) {
 	ts := httptest.NewServer(clairServerhandler(t))
 	defer ts.Close()
 
-	c := NewClair(ts.URL, 1)
+	c := NewClair(ts.URL, 1, time.Minute)
 	vs, err := c.Analyse(dockerImage)
 	if err != nil {
 		t.Fatal(err)
@@ -152,7 +153,7 @@ func (s *gServer) GetAncestry(ctx context.Context, in *clairpb.GetAncestryReques
 }
 
 func TestAnalyseV3(t *testing.T) {
-	c := NewClair(gAddr, 3)
+	c := NewClair(gAddr, 3, time.Minute)
 	vs, err := c.Analyse(dockerImage)
 	if err != nil {
 		t.Fatal(err)

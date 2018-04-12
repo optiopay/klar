@@ -34,6 +34,8 @@ Default is `Unknown`.
 
 * `CLAIR_THRESHOLD` - how many outputted vulnerabilities Klar can tolerate before returning `1`. Default is `0`.
 
+* `CLAIR_TIMEOUT` - timeout in minutes before Klar cancels the image scanning. Default is `1`
+
 * `DOCKER_USER` - Docker registry account name.
 
 * `DOCKER_PASSWORD` - Docker registry account password.
@@ -42,6 +44,8 @@ Default is `Unknown`.
 
 * `DOCKER_INSECURE` - Allow Klar to access registries with bad SSL certificates. Default is `false`. Clair will
 need to be booted with `-insecure-tls` for this to work.
+
+* `DOCKER_TIMEOUT` - timeout in minutes when trying to fetch layers from a docker registry
 
 * `REGISTRY_INSECURE` - Allow Klar to access insecure registries (HTTP only). Default is `false`.
 

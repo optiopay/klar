@@ -26,6 +26,9 @@ func main() {
 		fail("Invalid options: %s", err)
 	}
 
+	fmt.Fprintf(os.Stderr, "clair timeout %s\n", conf.ClairTimeout)
+	fmt.Fprintf(os.Stderr, "docker timeout: %s\n", conf.DockerConfig.Timeout)
+
 	image, err := docker.NewImage(&conf.DockerConfig)
 	if err != nil {
 		fail("Can't parse qname: %s", err)
@@ -52,7 +55,7 @@ func main() {
 
 	var vs []*clair.Vulnerability
 	for _, ver := range []int{1, 3} {
-		c := clair.NewClair(conf.ClairAddr, ver)
+		c := clair.NewClair(conf.ClairAddr, ver, conf.ClairTimeout)
 		vs, err = c.Analyse(image)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to analyze using API v%d: %s\n", ver, err)
