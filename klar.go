@@ -6,11 +6,26 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"io/ioutil"
 
 	"github.com/optiopay/klar/clair"
 	"github.com/optiopay/klar/docker"
 	"github.com/optiopay/klar/utils"
+	
+	"gopkg.in/yaml.v2"
 )
+
+//Used to represent the structure of the whitelist YAML file
+type vulnerabilitiesWhitelistYaml struct {
+	General []string
+	Images  map[string][]string
+}	
+
+//Map structure used for ease of searching for whitelisted vulnerabilites
+type vulnerabilitiesWhitelist struct {
+	General map[string]bool            //key: CVE and value: true
+	Images  map[string]map[string]bool //key: image name and value: [key: CVE and value: true]
+}
 
 const (
 	optionClairOutput      = "CLAIR_OUTPUT"
@@ -25,6 +40,7 @@ const (
 	optionDockerToken      = "DOCKER_TOKEN"
 	optionDockerInsecure   = "DOCKER_INSECURE"
 	optionRegistryInsecure = "REGISTRY_INSECURE"
+	optionWhiteListFile    = "WHITELIST_FILE"
 )
 
 var priorities = []string{"Unknown", "Negligible", "Low", "Medium", "High", "Critical", "Defcon1"}
@@ -73,12 +89,13 @@ type jsonOutput struct {
 }
 
 type config struct {
-	ClairAddr    string
-	ClairOutput  string
-	Threshold    int
-	JSONOutput   bool
-	ClairTimeout time.Duration
-	DockerConfig docker.Config
+	ClairAddr     string
+	ClairOutput   string
+	Threshold     int
+	JSONOutput    bool
+	ClairTimeout  time.Duration
+	DockerConfig  docker.Config
+	WhiteListFile string
 }
 
 func newConfig(args []string) (*config, error) {
@@ -107,11 +124,12 @@ func newConfig(args []string) (*config, error) {
 	}
 
 	return &config{
-		ClairAddr:    clairAddr,
-		ClairOutput:  clairOutput,
-		Threshold:    parseIntOption(optionClairThreshold),
-		JSONOutput:   parseBoolOption(optionJSONOutput),
-		ClairTimeout: time.Duration(clairTimeout) * time.Minute,
+		ClairAddr:     clairAddr,
+		ClairOutput:   clairOutput,
+		Threshold:     parseIntOption(optionClairThreshold),
+		JSONOutput:    parseBoolOption(optionJSONOutput),
+		ClairTimeout:  time.Duration(clairTimeout) * time.Minute,
+		WhiteListFile: os.Getenv(optionWhiteListFile),
 		DockerConfig: docker.Config{
 			ImageName:        args[1],
 			User:             os.Getenv(optionDockerUser),
@@ -122,4 +140,37 @@ func newConfig(args []string) (*config, error) {
 			Timeout:          time.Duration(dockerTimeout) * time.Minute,
 		},
 	}, nil
+}
+
+//Parse the whitelist file
+func parseWhitelistFile(whitelistFile string) (*vulnerabilitiesWhitelist, error) {
+	whitelistYaml := vulnerabilitiesWhitelistYaml{}
+	whitelist := vulnerabilitiesWhitelist{}
+	
+	//read the whitelist file
+	whitelistBytes, err := ioutil.ReadFile(whitelistFile)
+	if err != nil {
+		return nil, fmt.Errorf("could not read file %v", err)
+	}
+	if err = yaml.Unmarshal(whitelistBytes, &whitelistYaml); err != nil {
+		return nil, fmt.Errorf("could not unmarshal %v", err)
+	}
+	
+	//Initialize the whitelist maps
+	whitelist.General = make(map[string]bool)
+	whitelist.Images = make(map[string]map[string]bool)
+	
+	//Populate the maps
+	for _,cve := range whitelistYaml.General {
+		whitelist.General[cve] = true
+	}
+	
+	for image,cveList := range whitelistYaml.Images {
+		whitelist.Images[image] = make(map[string]bool)
+		for _,cve := range cveList {
+			whitelist.Images[image][cve] = true
+		}
+	}
+	
+	return &whitelist, nil
 }

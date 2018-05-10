@@ -134,6 +134,7 @@ func (a *apiV1) Analyze(image *docker.Image) ([]*Vulnerability, error) {
 	for _, f := range envelope.Layer.Features {
 		for _, v := range f.Vulnerabilities {
 			v.FeatureName = f.Name
+			v.FeatureVersion = f.Version
 			vs = append(vs, &v)
 		}
 	}
@@ -179,6 +180,7 @@ func (a *apiV3) Analyze(image *docker.Image) ([]*Vulnerability, error) {
 		for _, v := range f.Vulnerabilities {
 			cv := convertVulnerability(v)
 			cv.FeatureName = f.Name
+			cv.FeatureVersion = f.Version
 			vs = append(vs, cv)
 		}
 	}

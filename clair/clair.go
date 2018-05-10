@@ -45,15 +45,16 @@ type feature struct {
 
 // Vulnerability represents vulnerability entity returned by Clair
 type Vulnerability struct {
-	Name          string                 `json:"Name,omitempty"`
-	NamespaceName string                 `json:"NamespaceName,omitempty"`
-	Description   string                 `json:"Description,omitempty"`
-	Link          string                 `json:"Link,omitempty"`
-	Severity      string                 `json:"Severity,omitempty"`
-	Metadata      map[string]interface{} `json:"Metadata,omitempty"`
-	FixedBy       string                 `json:"FixedBy,omitempty"`
-	FixedIn       []feature              `json:"FixedIn,omitempty"`
-	FeatureName   string                 `json:"featureName",omitempty`
+	Name           string                 `json:"Name,omitempty"`
+	NamespaceName  string                 `json:"NamespaceName,omitempty"`
+	Description    string                 `json:"Description,omitempty"`
+	Link           string                 `json:"Link,omitempty"`
+	Severity       string                 `json:"Severity,omitempty"`
+	Metadata       map[string]interface{} `json:"Metadata,omitempty"`
+	FixedBy        string                 `json:"FixedBy,omitempty"`
+	FixedIn        []feature              `json:"FixedIn,omitempty"`
+	FeatureName    string                 `json:"featureName",omitempty`
+	FeatureVersion string                 `json:"featureName",omitempty`
 }
 
 type layerError struct {

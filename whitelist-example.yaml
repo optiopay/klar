@@ -1,0 +1,8 @@
+general:
+  - RHSA-2018:1345
+images:
+  centos:
+    - RHSA-2017:2479
+    - RHSA-2018:0805
+  alpine:
+    - CVE-2017-9671
