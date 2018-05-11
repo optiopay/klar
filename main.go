@@ -82,11 +82,8 @@ func main() {
 		fail("Failed to analyze, exiting")
 	}
 
-	//remove duplicates
-	vs = deDupe(vs);
-
 	//apply whitelist
-    numVulnerabilites := len(vs)
+	numVulnerabilites := len(vs)
 	vs = filterWhitelist(whitelist,vs)
 	numVulnerabilitiesAfterWhitelist := len(vs)
 	
@@ -159,8 +156,8 @@ func vulnsBy(sev string, store map[string][]*clair.Vulnerability) []*clair.Vulne
 
 //Filter out whitelisted vulnerabilites
 func filterWhitelist(whitelist *vulnerabilitiesWhitelist, vs []*clair.Vulnerability) []*clair.Vulnerability {
-	generalWhitelist := (*whitelist).General
-	imageWhitelist := (*whitelist).Images
+	generalWhitelist := whitelist.General
+	imageWhitelist := whitelist.Images
 	
 	filteredVs := make([]*clair.Vulnerability, 0, len(vs))
 	
@@ -177,24 +174,3 @@ func filterWhitelist(whitelist *vulnerabilitiesWhitelist, vs []*clair.Vulnerabil
 	
 	return filteredVs
 }
-
-//Remove duplicates
-func deDupe(vs []*clair.Vulnerability) []*clair.Vulnerability {
-	deDupedVs := make([]*clair.Vulnerability, 0, len(vs))
-	
-	//Use a map to store found vulnerabilities
-	foundVulnerabilites := make(map[string]bool)
-	
-	for _, v := range vs {
-		//use a combination of vulnerability name, feature name, and feature version to uniquely identify a vulnerability for deduping
-		if _, exists := foundVulnerabilites[ strings.Join([]string{v.Name,v.FeatureName,v.FeatureVersion},"") ]; !exists {
-			//vulnerability has not been encountered yet, so add it to the list and mark it as found in the map
-			deDupedVs = append(deDupedVs, v)
-			foundVulnerabilites[ strings.Join([]string{v.Name,v.FeatureName,v.FeatureVersion},"") ] = true
-		}
-	}
-	
-	return deDupedVs
-}
-	
-	

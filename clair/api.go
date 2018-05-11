@@ -135,7 +135,11 @@ func (a *apiV1) Analyze(image *docker.Image) ([]*Vulnerability, error) {
 		for _, v := range f.Vulnerabilities {
 			v.FeatureName = f.Name
 			v.FeatureVersion = f.Version
-			vs = append(vs, &v)
+			//the for loop uses the same variable for "v", reloading with new values
+			//since we are appending a pointer to the variable to the slice, we need to create a copy of the struct
+			//otherwise the slice winds up with multiple pointers to the same struct
+			vulnerability := v
+			vs = append(vs, &vulnerability)
 		}
 	}
 	return vs, nil

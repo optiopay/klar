@@ -16,7 +16,7 @@ import (
 )
 
 //Used to represent the structure of the whitelist YAML file
-type vulnerabilitiesWhitelistYaml struct {
+type vulnerabilitiesWhitelistYAML struct {
 	General []string
 	Images  map[string][]string
 }	
@@ -144,7 +144,7 @@ func newConfig(args []string) (*config, error) {
 
 //Parse the whitelist file
 func parseWhitelistFile(whitelistFile string) (*vulnerabilitiesWhitelist, error) {
-	whitelistYaml := vulnerabilitiesWhitelistYaml{}
+	whitelistYAML := vulnerabilitiesWhitelistYAML{}
 	whitelist := vulnerabilitiesWhitelist{}
 	
 	//read the whitelist file
@@ -152,7 +152,7 @@ func parseWhitelistFile(whitelistFile string) (*vulnerabilitiesWhitelist, error)
 	if err != nil {
 		return nil, fmt.Errorf("could not read file %v", err)
 	}
-	if err = yaml.Unmarshal(whitelistBytes, &whitelistYaml); err != nil {
+	if err = yaml.Unmarshal(whitelistBytes, &whitelistYAML); err != nil {
 		return nil, fmt.Errorf("could not unmarshal %v", err)
 	}
 	
@@ -161,11 +161,11 @@ func parseWhitelistFile(whitelistFile string) (*vulnerabilitiesWhitelist, error)
 	whitelist.Images = make(map[string]map[string]bool)
 	
 	//Populate the maps
-	for _,cve := range whitelistYaml.General {
+	for _,cve := range whitelistYAML.General {
 		whitelist.General[cve] = true
 	}
 	
-	for image,cveList := range whitelistYaml.Images {
+	for image,cveList := range whitelistYAML.Images {
 		whitelist.Images[image] = make(map[string]bool)
 		for _,cve := range cveList {
 			whitelist.Images[image][cve] = true
