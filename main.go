@@ -27,18 +27,23 @@ func main() {
 		fail("Invalid options: %s", err)
 	}
 
-	fmt.Fprintf(os.Stderr, "clair timeout %s\n", conf.ClairTimeout)
-	fmt.Fprintf(os.Stderr, "docker timeout: %s\n", conf.DockerConfig.Timeout)
-	
+	if !conf.JSONOutput {
+		fmt.Fprintf(os.Stderr, "clair timeout %s\n", conf.ClairTimeout)
+		fmt.Fprintf(os.Stderr, "docker timeout: %s\n", conf.DockerConfig.Timeout)
+	}
 	whitelist := &vulnerabilitiesWhitelist{}
-	if (conf.WhiteListFile != "") {
-		fmt.Fprintf(os.Stderr, "whitelist file: %s\n", conf.WhiteListFile)
+	if conf.WhiteListFile != "" {
+		if !conf.JSONOutput {
+			fmt.Fprintf(os.Stderr, "whitelist file: %s\n", conf.WhiteListFile)
+		}
 		whitelist, err = parseWhitelistFile(conf.WhiteListFile)
 		if err != nil {
 			fail("Could not parse whitelist file: %s", err)
 		}
 	} else {
-		fmt.Fprintf(os.Stderr, "no whitelist file\n")
+		if !conf.JSONOutput {
+			fmt.Fprintf(os.Stderr, "no whitelist file\n")
+		}
 	}
 
 	image, err := docker.NewImage(&conf.DockerConfig)
@@ -84,9 +89,9 @@ func main() {
 
 	//apply whitelist
 	numVulnerabilites := len(vs)
-	vs = filterWhitelist(whitelist,vs)
+	vs = filterWhitelist(whitelist, vs)
 	numVulnerabilitiesAfterWhitelist := len(vs)
-	
+
 	groupBySeverity(vs)
 	vsNumber := 0
 
@@ -100,12 +105,12 @@ func main() {
 	} else {
 		if numVulnerabilitiesAfterWhitelist < numVulnerabilites {
 			//display how many vulnerabilities were whitelisted
-			fmt.Printf("Whitelisted %d vulnerabilities\n", numVulnerabilites - numVulnerabilitiesAfterWhitelist)
+			fmt.Printf("Whitelisted %d vulnerabilities\n", numVulnerabilites-numVulnerabilitiesAfterWhitelist)
 		}
 		fmt.Printf("Found %d vulnerabilities\n", len(vs))
 		iteratePriorities(priorities[0], func(sev string) { fmt.Printf("%s: %d\n", sev, len(store[sev])) })
 		fmt.Printf("\n")
-		
+
 		iteratePriorities(conf.ClairOutput, func(sev string) {
 			vsNumber += len(store[sev])
 			for _, v := range store[sev] {
@@ -113,7 +118,7 @@ func main() {
 				fmt.Println("-----------------------------------------")
 			}
 		})
-		
+
 	}
 
 	if vsNumber > conf.Threshold {
@@ -158,9 +163,9 @@ func vulnsBy(sev string, store map[string][]*clair.Vulnerability) []*clair.Vulne
 func filterWhitelist(whitelist *vulnerabilitiesWhitelist, vs []*clair.Vulnerability) []*clair.Vulnerability {
 	generalWhitelist := whitelist.General
 	imageWhitelist := whitelist.Images
-	
+
 	filteredVs := make([]*clair.Vulnerability, 0, len(vs))
-	
+
 	for _, v := range vs {
 		if _, exists := generalWhitelist[v.Name]; !exists {
 			//vulnerability is not in the general whitelist, so get the image name by removing ":version" from the value returned via the Clair API
@@ -171,6 +176,6 @@ func filterWhitelist(whitelist *vulnerabilitiesWhitelist, vs []*clair.Vulnerabil
 			}
 		}
 	}
-	
+
 	return filteredVs
 }
