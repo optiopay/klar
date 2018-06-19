@@ -6,3 +6,6 @@ images:
     - RHSA-2018:0805
   alpine:
     - CVE-2017-9671
+  fluent/fluent-bit:
+    - CVE-2017-14062
+    - CVE-2018-6485
