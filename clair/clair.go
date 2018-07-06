@@ -53,8 +53,8 @@ type Vulnerability struct {
 	Metadata       map[string]interface{} `json:"Metadata,omitempty"`
 	FixedBy        string                 `json:"FixedBy,omitempty"`
 	FixedIn        []feature              `json:"FixedIn,omitempty"`
-	FeatureName    string                 `json:"featureName",omitempty`
-	FeatureVersion string                 `json:"featureName",omitempty`
+	FeatureName    string                 `json:"FeatureName",omitempty`
+	FeatureVersion string                 `json:"FeatureVersion",omitempty`
 }
 
 type layerError struct {
