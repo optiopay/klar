@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/optiopay/klar/clair"
 	"github.com/optiopay/klar/docker"
@@ -89,7 +88,7 @@ func main() {
 
 	//apply whitelist
 	numVulnerabilites := len(vs)
-	vs = filterWhitelist(whitelist, vs)
+	vs = filterWhitelist(whitelist, vs, image.Name)
 	numVulnerabilitiesAfterWhitelist := len(vs)
 
 	groupBySeverity(vs)
@@ -160,7 +159,7 @@ func vulnsBy(sev string, store map[string][]*clair.Vulnerability) []*clair.Vulne
 }
 
 //Filter out whitelisted vulnerabilites
-func filterWhitelist(whitelist *vulnerabilitiesWhitelist, vs []*clair.Vulnerability) []*clair.Vulnerability {
+func filterWhitelist(whitelist *vulnerabilitiesWhitelist, vs []*clair.Vulnerability, imageName string) []*clair.Vulnerability {
 	generalWhitelist := whitelist.General
 	imageWhitelist := whitelist.Images
 
@@ -168,8 +167,6 @@ func filterWhitelist(whitelist *vulnerabilitiesWhitelist, vs []*clair.Vulnerabil
 
 	for _, v := range vs {
 		if _, exists := generalWhitelist[v.Name]; !exists {
-			//vulnerability is not in the general whitelist, so get the image name by removing ":version" from the value returned via the Clair API
-			imageName := strings.Split(v.NamespaceName, ":")[0]
 			if _, exists := imageWhitelist[imageName][v.Name]; !exists {
 				//vulnerability is not in the image whitelist, so add it to the list to return
 				filteredVs = append(filteredVs, v)
