@@ -41,6 +41,7 @@ const (
 	optionDockerInsecure   = "DOCKER_INSECURE"
 	optionRegistryInsecure = "REGISTRY_INSECURE"
 	optionWhiteListFile    = "WHITELIST_FILE"
+	optionIgnoreUnfixed    = "IGNORE_UNFIXED"
 )
 
 var priorities = []string{"Unknown", "Negligible", "Low", "Medium", "High", "Critical", "Defcon1"}
@@ -96,6 +97,7 @@ type config struct {
 	ClairTimeout  time.Duration
 	DockerConfig  docker.Config
 	WhiteListFile string
+	IgnoreUnfixed bool
 }
 
 func newConfig(args []string) (*config, error) {
@@ -128,6 +130,7 @@ func newConfig(args []string) (*config, error) {
 		ClairOutput:   clairOutput,
 		Threshold:     parseIntOption(optionClairThreshold),
 		JSONOutput:    parseBoolOption(optionJSONOutput),
+		IgnoreUnfixed: parseBoolOption(optionIgnoreUnfixed),
 		ClairTimeout:  time.Duration(clairTimeout) * time.Minute,
 		WhiteListFile: os.Getenv(optionWhiteListFile),
 		DockerConfig: docker.Config{
