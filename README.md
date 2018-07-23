@@ -53,6 +53,8 @@ need to be booted with `-insecure-tls` for this to work.
 
 * `WHITELIST_FILE` - Path to the YAML file with the CVE whitelist. Look at `whitelist-example.yaml` for the file format.
 
+* `IGNORE_UNFIXED` - Do not count vulnerabilities without a fix towards the threshold
+
 Usage:
 
     CLAIR_ADDR=localhost CLAIR_OUTPUT=High CLAIR_THRESHOLD=10 DOCKER_USER=docker DOCKER_PASSWORD=secret klar postgres:9.5.1
