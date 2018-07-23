@@ -3,22 +3,22 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "H1CjsPDh9Z1blqsqJIJ+EUfQEeo=",
+			"checksumSHA1": "SC3BGAfaICWIfRuflaBxU6FjSl4=",
 			"path": "github.com/coreos/clair/api/v3/clairpb",
-			"revision": "b1cd09231990e44bc3376f95dcb94e2c3026a1ec",
-			"revisionTime": "2018-07-17T23:57:26Z"
+			"revision": "1425086670521ed5510e5dadd5e0b374d33e0b87",
+			"revisionTime": "2017-11-28T22:15:06Z"
 		},
 		{
-			"checksumSHA1": "iPtWcXdYFZAMGNjro3z3nX5qYD4=",
+			"checksumSHA1": "SiG1NedSBXaLhsHlu5uO8keKRzE=",
 			"path": "github.com/coreos/clair/database",
-			"revision": "b1cd09231990e44bc3376f95dcb94e2c3026a1ec",
-			"revisionTime": "2018-07-17T23:57:26Z"
+			"revision": "1425086670521ed5510e5dadd5e0b374d33e0b87",
+			"revisionTime": "2017-11-28T22:15:06Z"
 		},
 		{
 			"checksumSHA1": "VMxfZpMDX8d4KZD96K9/RXRULtU=",
 			"path": "github.com/coreos/clair/ext/versionfmt",
-			"revision": "b1cd09231990e44bc3376f95dcb94e2c3026a1ec",
-			"revisionTime": "2018-07-17T23:57:26Z"
+			"revision": "1425086670521ed5510e5dadd5e0b374d33e0b87",
+			"revisionTime": "2017-11-28T22:15:06Z"
 		},
 		{
 			"checksumSHA1": "ITzWX1LucDMHcZh509uUwc920KY=",
