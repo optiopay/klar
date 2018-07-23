@@ -96,7 +96,16 @@ func main() {
 
 	if conf.JSONOutput {
 		iteratePriorities(conf.ClairOutput, func(sev string) {
-			vsNumber += len(store[sev])
+			if conf.IgnoreUnfixed {
+				// need to iterate over store[sev]
+				for _, v := range store[sev] {
+					if v.FixedBy != "" {
+						vsNumber++
+					}
+				}
+			} else {
+				vsNumber += len(store[sev])
+			}
 			output.Vulnerabilities[sev] = store[sev]
 		})
 		enc := json.NewEncoder(os.Stdout)
@@ -111,10 +120,17 @@ func main() {
 		fmt.Printf("\n")
 
 		iteratePriorities(conf.ClairOutput, func(sev string) {
-			vsNumber += len(store[sev])
 			for _, v := range store[sev] {
-				fmt.Printf("%s: [%s] \nFound in: %s [%s]\nFixed By: %s\n%s\n%s\n", v.Name, v.Severity, v.FeatureName, v.FeatureVersion, v.FixedBy, v.Description, v.Link)
+				fmt.Printf("%s: [%s] \nFound in: %s [%s]\nFixed By: %s\n%s\n%s\n", v.Name, v.Severity, v.FeatureName, 
+v.FeatureVersion, v.FixedBy, v.Description, v.Link)
 				fmt.Println("-----------------------------------------")
+				if conf.IgnoreUnfixed {
+					if v.FixedBy != "" {
+						vsNumber++
+					}
+				} else {
+					vsNumber++
+				}
 			}
 		})
 
@@ -176,3 +192,4 @@ func filterWhitelist(whitelist *vulnerabilitiesWhitelist, vs []*clair.Vulnerabil
 
 	return filteredVs
 }
+
