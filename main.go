@@ -14,7 +14,7 @@ var store = make(map[string][]*clair.Vulnerability)
 func main() {
 	fail := func(format string, a ...interface{}) {
 		fmt.Fprintf(os.Stderr, fmt.Sprintf("%s\n", format), a...)
-		os.Exit(1)
+		os.Exit(2)
 	}
 
 	if len(os.Args) != 2 {
