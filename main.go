@@ -137,7 +137,7 @@ v.FeatureVersion, v.FixedBy, v.Description, v.Link)
 	}
 
 	if vsNumber > conf.Threshold {
-		os.Exit(1)
+		os.Exit(2)
 	}
 }
 

@@ -22,7 +22,7 @@ make sure your Go binary folder is in your `PATH` (e.g. `export PATH=$PATH:/usr/
 
 ## Usage
 
-Klar process returns `0` if the number of detected high severity vulnerabilities in an image is less than or equal to a threshold (see below), otherwise it returns `1`.
+Klar process returns if `0` if the number of detected high severity vulnerabilities in an image is less than or equal to a threshold (see below) and `1` if an error ahs prevented the image from being analyzed. Otherwise it returns `2`, indicating vulnerabilities were found.
 
 Klar can be configured via the following environment variables:
 
@@ -32,7 +32,7 @@ Klar can be configured via the following environment variables:
 will be outputted. Supported levels are `Unknown`, `Negligible`, `Low`, `Medium`, `High`, `Critical`, `Defcon1`.
 Default is `Unknown`.
 
-* `CLAIR_THRESHOLD` - how many outputted vulnerabilities Klar can tolerate before returning `1`. Default is `0`.
+* `CLAIR_THRESHOLD` - how many outputted vulnerabilities Klar can tolerate before returning `2`. Default is `0`.
 
 * `CLAIR_TIMEOUT` - timeout in minutes before Klar cancels the image scanning. Default is `1`
 
