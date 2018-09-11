@@ -107,6 +107,7 @@ var tokenRe = regexp.MustCompile(`Bearer realm="(.*?)",service="(.*?)",scope="(.
 func NewImage(conf *Config) (*Image, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: conf.InsecureTLS},
+		Proxy:           http.ProxyFromEnvironment,
 	}
 	client := http.Client{
 		Transport: tr,
