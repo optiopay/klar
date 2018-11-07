@@ -93,6 +93,7 @@ func main() {
 
 	groupBySeverity(vs)
 	vsNumber := 0
+        higherSeverity := false        
 
 	if conf.JSONOutput {
 		iteratePriorities(conf.ClairOutput, func(sev string) {
@@ -131,6 +132,10 @@ v.FeatureVersion, v.FixedBy, v.Description, v.Link)
 				} else {
 					vsNumber++
 				}
+                               
+                                if (conf.ClairOutput !=  v.Severity) {
+                                    higherSeverity = true        
+                                }
 			}
 		})
 
@@ -139,6 +144,10 @@ v.FeatureVersion, v.FixedBy, v.Description, v.Link)
 	if vsNumber > conf.Threshold {
 		os.Exit(1)
 	}
+
+        if higherSeverity {
+           os.Exit(1)
+        } 
 }
 
 func iteratePriorities(output string, f func(sev string)) {
