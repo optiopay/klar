@@ -5,11 +5,45 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/olekukonko/tablewriter"
 	"github.com/optiopay/klar/clair"
 	"github.com/optiopay/klar/docker"
 )
 
+const (
+	ColorCritical = "\033[1;31m%s\033[0m"
+	ColorHigh     = "\033[0;31m%s\033[0m"
+	ColorMedium   = "\033[0;33m%s\033[0m"
+	ColorLow      = "\033[0;94m%s\033[0m"
+	ColorDefault  = "\033[0;97m%s\033[0m"
+)
+
 var store = make(map[string][]*clair.Vulnerability)
+
+var Severity = map[string]int{
+	"Defcon1":    7,
+	"Critical":   6,
+	"High":       5,
+	"Medium":     4,
+	"Low":        3,
+	"Negligible": 2,
+	"Unknown":    1,
+}
+
+func getSeverityStyle(status string) string {
+	var colorStyle = ColorDefault
+	if Severity[status] >= 6 {
+		colorStyle = ColorCritical
+	} else if Severity[status] >= 5 {
+		colorStyle = ColorHigh
+	} else if Severity[status] >= 4 {
+		colorStyle = ColorMedium
+	} else if Severity[status] >= 2 {
+		colorStyle = ColorLow
+	}
+
+	return fmt.Sprintf(colorStyle, status)
+}
 
 func main() {
 	fail := func(format string, a ...interface{}) {
@@ -119,11 +153,30 @@ func main() {
 		iteratePriorities(priorities[0], func(sev string) { fmt.Printf("%s: %d\n", sev, len(store[sev])) })
 		fmt.Printf("\n")
 
+		table := tablewriter.NewWriter(os.Stdout)
+		header := []string{
+			"Severity", "Name", "FeatureName", "FeatureVersion", "FixedBy", "Description", "Link",
+		}
+		table.SetHeader(header)
+		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+		table.SetRowSeparator("-")
+		table.SetRowLine(true)
+		table.SetAlignment(tablewriter.ALIGN_LEFT)
+
+		var data [][]string
+
 		iteratePriorities(conf.ClairOutput, func(sev string) {
 			for _, v := range store[sev] {
-				fmt.Printf("%s: [%s] \nFound in: %s [%s]\nFixed By: %s\n%s\n%s\n", v.Name, v.Severity, v.FeatureName, 
-v.FeatureVersion, v.FixedBy, v.Description, v.Link)
-				fmt.Println("-----------------------------------------")
+				data = append(data, []string{
+					getSeverityStyle(v.Severity),
+					v.Name,
+					v.FeatureName,
+					v.FeatureVersion,
+					v.FixedBy,
+					v.Description,
+					v.Link,
+				})
+
 				if conf.IgnoreUnfixed {
 					if v.FixedBy != "" {
 						vsNumber++
@@ -133,6 +186,12 @@ v.FeatureVersion, v.FixedBy, v.Description, v.Link)
 				}
 			}
 		})
+
+		table.AppendBulk(data)
+
+		if len(data) > 0 {
+			table.Render()
+		}
 
 	}
 
@@ -192,4 +251,3 @@ func filterWhitelist(whitelist *vulnerabilitiesWhitelist, vs []*clair.Vulnerabil
 
 	return filteredVs
 }
-
