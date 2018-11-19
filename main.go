@@ -10,39 +10,26 @@ import (
 	"github.com/optiopay/klar/docker"
 )
 
-const (
-	ColorCritical = "\033[1;31m%s\033[0m"
-	ColorHigh     = "\033[0;31m%s\033[0m"
-	ColorMedium   = "\033[0;33m%s\033[0m"
-	ColorLow      = "\033[0;94m%s\033[0m"
-	ColorDefault  = "\033[0;97m%s\033[0m"
-)
-
 var store = make(map[string][]*clair.Vulnerability)
 
-var Severity = map[string]int{
-	"Defcon1":    7,
-	"Critical":   6,
-	"High":       5,
-	"Medium":     4,
-	"Low":        3,
-	"Negligible": 2,
-	"Unknown":    1,
+var SeverityStyle = map[string]string{
+	"Defcon1":    "\033[1;31m%s\033[0m",
+	"Critical":   "\033[1;31m%s\033[0m",
+	"High":       "\033[0;31m%s\033[0m",
+	"Medium":     "\033[0;33m%s\033[0m",
+	"Low":        "\033[0;94m%s\033[0m",
+	"Negligible": "\033[0;94m%s\033[0m",
+	"Unknown":    "\033[0;97m%s\033[0m",
 }
 
 func getSeverityStyle(status string) string {
-	var colorStyle = ColorDefault
-	if Severity[status] >= 6 {
-		colorStyle = ColorCritical
-	} else if Severity[status] >= 5 {
-		colorStyle = ColorHigh
-	} else if Severity[status] >= 4 {
-		colorStyle = ColorMedium
-	} else if Severity[status] >= 2 {
-		colorStyle = ColorLow
+	if val, ok := SeverityStyle[status]; ok {
+		// Return matched style
+		return fmt.Sprintf(val, status)
 	}
 
-	return fmt.Sprintf(colorStyle, status)
+	// Return default style Unknown if not matched
+	return fmt.Sprintf(SeverityStyle["Unknown"], status)
 }
 
 func main() {
