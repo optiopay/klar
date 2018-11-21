@@ -51,6 +51,8 @@ need to be booted with `-insecure-tls` for this to work.
 
 * `JSON_OUTPUT` - Output JSON, not plain text. Default is `false`.
 
+* `FORMAT_OUTPUT` - Output format of the vulnerabilities. Supported formats are `standard`, `json`, `table`. Default is `standard`. If `JSON_OUTPUT` is set to true, this option is ignored.
+
 * `WHITELIST_FILE` - Path to the YAML file with the CVE whitelist. Look at `whitelist-example.yaml` for the file format.
 
 * `IGNORE_UNFIXED` - Do not count vulnerabilities without a fix towards the threshold
