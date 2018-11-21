@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-	"io/ioutil"
 
 	"github.com/optiopay/klar/clair"
 	"github.com/optiopay/klar/docker"
 	"github.com/optiopay/klar/utils"
-	
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -19,7 +19,7 @@ import (
 type vulnerabilitiesWhitelistYAML struct {
 	General []string
 	Images  map[string][]string
-}	
+}
 
 //Map structure used for ease of searching for whitelisted vulnerabilites
 type vulnerabilitiesWhitelist struct {
@@ -34,7 +34,8 @@ const (
 	optionClairThreshold   = "CLAIR_THRESHOLD"
 	optionClairTimeout     = "CLAIR_TIMEOUT"
 	optionDockerTimeout    = "DOCKER_TIMEOUT"
-	optionJSONOutput       = "JSON_OUTPUT"
+	optionJSONOutput       = "JSON_OUTPUT" // deprecate?
+	optionFormatOutput     = "FORMAT_OUTPUT"
 	optionDockerUser       = "DOCKER_USER"
 	optionDockerPassword   = "DOCKER_PASSWORD"
 	optionDockerToken      = "DOCKER_TOKEN"
@@ -45,6 +46,7 @@ const (
 )
 
 var priorities = []string{"Unknown", "Negligible", "Low", "Medium", "High", "Critical", "Defcon1"}
+var formatTypes = []string{"standard", "json", "table"}
 
 func parseOutputPriority() (string, error) {
 	clairOutput := priorities[0]
@@ -84,6 +86,31 @@ func parseBoolOption(key string) bool {
 	return val
 }
 
+func parseFormatTypes() (string, error) {
+	// until JSON_OUTPUT is actually removed, it should override FORMAT_OUTPUT
+	if parseBoolOption(optionJSONOutput) {
+		return "json", nil
+	}
+	formatStyle := formatTypes[0]
+	formatOutputEnv := os.Getenv(optionFormatOutput)
+	if formatOutputEnv != "" {
+		output := strings.ToLower(formatOutputEnv)
+		correct := false
+		for _, stlye := range formatTypes {
+			if stlye == output {
+				formatStyle = stlye
+				correct = true
+				break
+			}
+		}
+
+		if !correct {
+			return "", fmt.Errorf("Format type %s is not supported, only support %v\n", formatOutputEnv, formatTypes)
+		}
+	}
+	return formatStyle, nil
+}
+
 type jsonOutput struct {
 	LayerCount      int
 	Vulnerabilities map[string][]*clair.Vulnerability
@@ -94,6 +121,7 @@ type config struct {
 	ClairOutput   string
 	Threshold     int
 	JSONOutput    bool
+	FormatStyle   string
 	ClairTimeout  time.Duration
 	DockerConfig  docker.Config
 	WhiteListFile string
@@ -125,11 +153,17 @@ func newConfig(args []string) (*config, error) {
 		dockerTimeout = 1
 	}
 
+	formatStyle, err := parseFormatTypes()
+	if err != nil {
+		return nil, err
+	}
+
 	return &config{
 		ClairAddr:     clairAddr,
 		ClairOutput:   clairOutput,
 		Threshold:     parseIntOption(optionClairThreshold),
-		JSONOutput:    parseBoolOption(optionJSONOutput),
+		JSONOutput:    formatStyle == "json",
+		FormatStyle:   formatStyle,
 		IgnoreUnfixed: parseBoolOption(optionIgnoreUnfixed),
 		ClairTimeout:  time.Duration(clairTimeout) * time.Minute,
 		WhiteListFile: os.Getenv(optionWhiteListFile),
@@ -149,7 +183,7 @@ func newConfig(args []string) (*config, error) {
 func parseWhitelistFile(whitelistFile string) (*vulnerabilitiesWhitelist, error) {
 	whitelistYAML := vulnerabilitiesWhitelistYAML{}
 	whitelist := vulnerabilitiesWhitelist{}
-	
+
 	//read the whitelist file
 	whitelistBytes, err := ioutil.ReadFile(whitelistFile)
 	if err != nil {
@@ -158,22 +192,22 @@ func parseWhitelistFile(whitelistFile string) (*vulnerabilitiesWhitelist, error)
 	if err = yaml.Unmarshal(whitelistBytes, &whitelistYAML); err != nil {
 		return nil, fmt.Errorf("could not unmarshal %v", err)
 	}
-	
+
 	//Initialize the whitelist maps
 	whitelist.General = make(map[string]bool)
 	whitelist.Images = make(map[string]map[string]bool)
-	
+
 	//Populate the maps
-	for _,cve := range whitelistYAML.General {
+	for _, cve := range whitelistYAML.General {
 		whitelist.General[cve] = true
 	}
-	
-	for image,cveList := range whitelistYAML.Images {
+
+	for image, cveList := range whitelistYAML.Images {
 		whitelist.Images[image] = make(map[string]bool)
-		for _,cve := range cveList {
+		for _, cve := range cveList {
 			whitelist.Images[image][cve] = true
 		}
 	}
-	
+
 	return &whitelist, nil
 }
