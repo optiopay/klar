@@ -100,11 +100,11 @@ There is no permanent username/password for Amazon ECR, the credentials must be 
     DOCKER_USER=AWS DOCKER_PASSWORD=${PASSWORD} ./klar ${REGISTRY}/my-image
 
 ## Google GCR support
-For authentication against GCR (Google Cloud Registry), the easiest way is to use the [application default credentials](https://developers.google.com/identity/protocols/application-default-credentials). These only work when running Klar from GCP. The only requirement is the Google Cloud SDK. 
+For authentication against GCR (Google Cloud Registry), the easiest way is to use the [application default credentials](https://developers.google.com/identity/protocols/application-default-credentials). These only work when running Klar from GCP. The only requirement is the Google Cloud SDK.
 
     DOCKER_USER=oauth2accesstoken
     DOCKER_PASSWORD="$(gcloud auth application-default print-access-token)"
-    
+
 With Docker:
 
     DOCKER_USER=oauth2accesstoken

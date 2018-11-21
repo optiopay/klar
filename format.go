@@ -9,7 +9,6 @@ import (
 	"github.com/optiopay/klar/clair"
 )
 
-
 var SeverityStyle = map[string]string{
 	"Defcon1":    "\033[1;31m%s\033[0m",
 	"Critical":   "\033[1;31m%s\033[0m",
@@ -30,7 +29,7 @@ func getSeverityStyle(status string) string {
 	return fmt.Sprintf(SeverityStyle["Unknown"], status)
 }
 
-func standardFormat(conf *config, vs []*clair.Vulnerability) (int) {
+func standardFormat(conf *config, vs []*clair.Vulnerability) int {
 	vsNumber := 0
 	iteratePriorities(priorities[0], func(sev string) { fmt.Printf("%s: %d\n", sev, len(store[sev])) })
 	fmt.Printf("\n")
@@ -38,7 +37,7 @@ func standardFormat(conf *config, vs []*clair.Vulnerability) (int) {
 	iteratePriorities(conf.ClairOutput, func(sev string) {
 		for _, v := range store[sev] {
 			fmt.Printf("%s: [%s] \nFound in: %s [%s]\nFixed By: %s\n%s\n%s\n", v.Name, v.Severity, v.FeatureName,
-v.FeatureVersion, v.FixedBy, v.Description, v.Link)
+				v.FeatureVersion, v.FixedBy, v.Description, v.Link)
 			fmt.Println("-----------------------------------------")
 			if conf.IgnoreUnfixed {
 				if v.FixedBy != "" {
@@ -52,7 +51,7 @@ v.FeatureVersion, v.FixedBy, v.Description, v.Link)
 	return vsNumber
 }
 
-func jsonFormat(conf *config, output jsonOutput) (int) {
+func jsonFormat(conf *config, output jsonOutput) int {
 	vsNumber := 0
 	iteratePriorities(conf.ClairOutput, func(sev string) {
 		if conf.IgnoreUnfixed {
@@ -73,7 +72,7 @@ func jsonFormat(conf *config, output jsonOutput) (int) {
 	return vsNumber
 }
 
-func tableFormat(conf *config, vs []*clair.Vulnerability) (int) {
+func tableFormat(conf *config, vs []*clair.Vulnerability) int {
 	vsNumber := 0
 	iteratePriorities(priorities[0], func(sev string) { fmt.Printf("%s: %d\n", sev, len(store[sev])) })
 	fmt.Printf("\n")
@@ -120,7 +119,7 @@ func tableFormat(conf *config, vs []*clair.Vulnerability) (int) {
 	return vsNumber
 }
 
-func iteratePriorities(output string, f func(sev string)){
+func iteratePriorities(output string, f func(sev string)) {
 	filtered := true
 	for _, sev := range priorities {
 		if filtered {

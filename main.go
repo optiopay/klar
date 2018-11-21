@@ -100,10 +100,10 @@ func main() {
 		}
 		fmt.Printf("Found %d vulnerabilities\n", len(vs))
 		switch style := conf.FormatStyle; style {
-			case "table":
-				vsNumber = tableFormat(conf, vs)
-			default:
-				vsNumber = standardFormat(conf, vs)
+		case "table":
+			vsNumber = tableFormat(conf, vs)
+		default:
+			vsNumber = standardFormat(conf, vs)
 		}
 	}
 
