@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -86,75 +85,30 @@ func main() {
 		fail("Failed to analyze, exiting")
 	}
 
-	//apply whitelist
-	numVulnerabilites := len(vs)
-	vs = filterWhitelist(whitelist, vs, image.Name)
-	numVulnerabilitiesAfterWhitelist := len(vs)
-
-	groupBySeverity(vs)
 	vsNumber := 0
 
 	if conf.JSONOutput {
-		iteratePriorities(conf.ClairOutput, func(sev string) {
-			if conf.IgnoreUnfixed {
-				// need to iterate over store[sev]
-				for _, v := range store[sev] {
-					if v.FixedBy != "" {
-						vsNumber++
-					}
-				}
-			} else {
-				vsNumber += len(store[sev])
-			}
-			output.Vulnerabilities[sev] = store[sev]
-		})
-		enc := json.NewEncoder(os.Stdout)
-		enc.Encode(output)
+		vsNumber = jsonFormat(conf, output)
 	} else {
+		numVulnerabilites := len(vs)
+		vs = filterWhitelist(whitelist, vs, image.Name)
+		numVulnerabilitiesAfterWhitelist := len(vs)
+		groupBySeverity(vs)
 		if numVulnerabilitiesAfterWhitelist < numVulnerabilites {
 			//display how many vulnerabilities were whitelisted
 			fmt.Printf("Whitelisted %d vulnerabilities\n", numVulnerabilites-numVulnerabilitiesAfterWhitelist)
 		}
 		fmt.Printf("Found %d vulnerabilities\n", len(vs))
-		iteratePriorities(priorities[0], func(sev string) { fmt.Printf("%s: %d\n", sev, len(store[sev])) })
-		fmt.Printf("\n")
-
-		iteratePriorities(conf.ClairOutput, func(sev string) {
-			for _, v := range store[sev] {
-				fmt.Printf("%s: [%s] \nFound in: %s [%s]\nFixed By: %s\n%s\n%s\n", v.Name, v.Severity, v.FeatureName, 
-v.FeatureVersion, v.FixedBy, v.Description, v.Link)
-				fmt.Println("-----------------------------------------")
-				if conf.IgnoreUnfixed {
-					if v.FixedBy != "" {
-						vsNumber++
-					}
-				} else {
-					vsNumber++
-				}
-			}
-		})
-
+		switch style := conf.FormatStyle; style {
+		case "table":
+			vsNumber = tableFormat(conf, vs)
+		default:
+			vsNumber = standardFormat(conf, vs)
+		}
 	}
 
 	if vsNumber > conf.Threshold {
 		os.Exit(1)
-	}
-}
-
-func iteratePriorities(output string, f func(sev string)) {
-	filtered := true
-	for _, sev := range priorities {
-		if filtered {
-			if sev != output {
-				continue
-			} else {
-				filtered = false
-			}
-		}
-
-		if len(store[sev]) != 0 {
-			f(sev)
-		}
 	}
 }
 
@@ -192,4 +146,3 @@ func filterWhitelist(whitelist *vulnerabilitiesWhitelist, vs []*clair.Vulnerabil
 
 	return filteredVs
 }
-
