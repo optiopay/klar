@@ -26,7 +26,7 @@ Klar process returns if `0` if the number of detected high severity vulnerabilit
 
 Klar can be configured via the following environment variables:
 
-* `CLAIR_ADDR` - address of Clair server. The most complete form is `protocol://host:port` - `protocol` and `port` default to `http` and `6060` respectfully and may be omitted.
+* `CLAIR_ADDR` - address of Clair server. It has a form of `protocol://host:port` - `protocol` and `port` default to `http` and `6060` respectively and may be omitted. You can also specify basic authentication in the URL: `protocol://login:password@host:port`.
 
 * `CLAIR_OUTPUT` - severity level threshold, vulnerabilities with severity level higher than or equal to this threshold
 will be outputted. Supported levels are `Unknown`, `Negligible`, `Low`, `Medium`, `High`, `Critical`, `Defcon1`.
