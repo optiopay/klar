@@ -87,13 +87,14 @@ func main() {
 
 	vsNumber := 0
 
+	numVulnerabilites := len(vs)
+	vs = filterWhitelist(whitelist, vs, image.Name)
+	numVulnerabilitiesAfterWhitelist := len(vs)
+	groupBySeverity(vs)
+
 	if conf.JSONOutput {
 		vsNumber = jsonFormat(conf, output)
 	} else {
-		numVulnerabilites := len(vs)
-		vs = filterWhitelist(whitelist, vs, image.Name)
-		numVulnerabilitiesAfterWhitelist := len(vs)
-		groupBySeverity(vs)
 		if numVulnerabilitiesAfterWhitelist < numVulnerabilites {
 			//display how many vulnerabilities were whitelisted
 			fmt.Printf("Whitelisted %d vulnerabilities\n", numVulnerabilites-numVulnerabilitiesAfterWhitelist)
