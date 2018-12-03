@@ -96,7 +96,7 @@ There is no permanent username/password for Amazon ECR, the credentials must be 
 
     DOCKER_LOGIN=`aws ecr get-login --no-include-email`
     PASSWORD=`echo $DOCKER_LOGIN | cut -d' ' -f6`
-    REGISTRY=`echo $DOCKER_LOGIN | cut -d' ' -f9 | sed "s/https:\/\///"`
+    REGISTRY=`echo $DOCKER_LOGIN | cut -d' ' -f7 | sed "s/https:\/\///"`
     DOCKER_USER=AWS DOCKER_PASSWORD=${PASSWORD} ./klar ${REGISTRY}/my-image
 
 ## Google GCR support
