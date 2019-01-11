@@ -128,7 +128,7 @@ func (s *gServer) PostAncestry(ctx context.Context, in *clairpb.PostAncestryRequ
 
 func (s *gServer) GetAncestry(ctx context.Context, in *clairpb.GetAncestryRequest) (*clairpb.GetAncestryResponse, error) {
 	return &clairpb.GetAncestryResponse{
-		Ancestry: &clairpb.Ancestry{
+		Ancestry: &clairpb.GetAncestryResponse_Ancestry{
 			Name: in.GetAncestryName(),
 			Features: []*clairpb.Feature{
 				{

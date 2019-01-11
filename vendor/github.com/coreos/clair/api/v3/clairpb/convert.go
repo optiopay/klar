@@ -134,7 +134,7 @@ func AncestryFromDatabaseModel(dbAncestry database.Ancestry) *GetAncestryRespons
 }
 
 // LayerFromDatabaseModel converts database layer to api layer.
-func LayerFromDatabaseModel(dbLayer database.Layer) *Layer {
+func LayerFromDatabaseModel(dbLayer database.AncestryLayer) *Layer {
 	layer := Layer{Hash: dbLayer.Hash}
 	return &layer
 }
