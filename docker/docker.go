@@ -236,8 +236,8 @@ func (i *Image) Pull() error {
 }
 
 func parseImageResponse(resp *http.Response, image *Image) error {
-	contentType := resp.Header.Get("Content-Type")
-	if contentType == "application/vnd.docker.distribution.manifest.v2+json" {
+	switch contentType := resp.Header.Get("Content-Type"); contentType {
+	case "application/vnd.docker.distribution.manifest.v2+json":
 		var imageV2 imageV2
 		if err := json.NewDecoder(resp.Body).Decode(&imageV2); err != nil {
 			fmt.Fprintln(os.Stderr, "Image V2 decode error")
@@ -249,7 +249,7 @@ func parseImageResponse(resp *http.Response, image *Image) error {
 		}
 		image.digest = imageV2.Config.Digest
 		image.schemaVersion = imageV2.SchemaVersion
-	} else {
+	case "application/vnd.docker.distribution.manifest.v1+prettyjws":
 		var imageV1 imageV1
 		if err := json.NewDecoder(resp.Body).Decode(&imageV1); err != nil {
 			fmt.Fprintln(os.Stderr, "ImageV1 decode error")
@@ -262,6 +262,8 @@ func parseImageResponse(resp *http.Response, image *Image) error {
 			image.FsLayers[len(imageV1.FsLayers)-1-i].BlobSum = imageV1.FsLayers[i].BlobSum
 		}
 		image.schemaVersion = imageV1.SchemaVersion
+	default:
+		return fmt.Errorf("Docker Registry responded with unsupported Content-Type: %s", contentType)
 	}
 	return nil
 }
@@ -319,11 +321,9 @@ func (i *Image) pullReq() (*http.Response, error) {
 		fmt.Fprintln(os.Stderr, "Can't create a request")
 		return nil, err
 	}
-	if i.Token == "" {
-		if i.user != "" {
-			req.SetBasicAuth(i.user, i.password)
-			i.Token = req.Header.Get("Authorization")
-		}
+	if i.Token == "" && i.user != "" {
+		req.SetBasicAuth(i.user, i.password)
+		i.Token = req.Header.Get("Authorization")
 	} else {
 		req.Header.Set("Authorization", i.Token)
 	}
