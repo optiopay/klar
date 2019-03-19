@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"net"
+	"net/url"
 
 	"github.com/coreos/clair/api/v3/clairpb"
 	"github.com/optiopay/klar/docker"
@@ -26,22 +28,40 @@ type apiV3 struct {
 	client clairpb.AncestryServiceClient
 }
 
-func newAPI(url string, version int, timeout time.Duration) (API, error) {
+func newAPI(clair_url string, version int, timeout time.Duration) (API, error) {
 	if version < 3 {
-		return newAPIV1(url, timeout), nil
+		return newAPIV1(clair_url, timeout), nil
 	}
-	return newAPIV3(url)
+	return newAPIV3(clair_url)
 }
 
-func newAPIV1(url string, timeout time.Duration) *apiV1 {
-	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-		url = fmt.Sprintf("http://%s", url)
+func newAPIV1(clair_url string, timeout time.Duration) *apiV1 {
+	u, err := url.Parse(clair_url)
+	if err != nil {
+		panic(fmt.Sprintf("Cant't parse Clair URL from: %s", clair_url))
 	}
-	if strings.LastIndex(url, ":") < 6 {
-		url = fmt.Sprintf("%s:6060", url)
+
+	host, port, err := net.SplitHostPort(u.Host)
+	if err != nil {
+		panic(fmt.Sprintf("Cant't extract hostname and port from: %s", u.Host))
 	}
+
+	if !(u.Scheme == "http") && !(u.Scheme == "https") {
+		clair_url = fmt.Sprintf("http://%s", clair_url)
+	}
+
+	if port == "" {
+		clair_url = fmt.Sprintf("%s:6060", clair_url)
+	}
+
+	// If we define HTTPS and set the port to 443 lets remove the port to avoid
+	// potential problems with vhost matching.
+	if u.Scheme == "https" && port == "443" {
+		clair_url = fmt.Sprintf("https://%s", host)
+	}
+
 	return &apiV1{
-		url: url,
+		url: clair_url,
 		client: http.Client{
 			Timeout: timeout,
 		},
