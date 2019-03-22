@@ -28,21 +28,23 @@ type vulnerabilitiesWhitelist struct {
 }
 
 const (
-	optionClairOutput      = "CLAIR_OUTPUT"
-	optionClairAddress     = "CLAIR_ADDR"
-	optionKlarTrace        = "KLAR_TRACE"
-	optionClairThreshold   = "CLAIR_THRESHOLD"
-	optionClairTimeout     = "CLAIR_TIMEOUT"
-	optionDockerTimeout    = "DOCKER_TIMEOUT"
-	optionJSONOutput       = "JSON_OUTPUT" // deprecate?
-	optionFormatOutput     = "FORMAT_OUTPUT"
-	optionDockerUser       = "DOCKER_USER"
-	optionDockerPassword   = "DOCKER_PASSWORD"
-	optionDockerToken      = "DOCKER_TOKEN"
-	optionDockerInsecure   = "DOCKER_INSECURE"
-	optionRegistryInsecure = "REGISTRY_INSECURE"
-	optionWhiteListFile    = "WHITELIST_FILE"
-	optionIgnoreUnfixed    = "IGNORE_UNFIXED"
+	optionClairOutput        = "CLAIR_OUTPUT"
+	optionClairAddress       = "CLAIR_ADDR"
+	optionKlarTrace          = "KLAR_TRACE"
+	optionClairThreshold     = "CLAIR_THRESHOLD"
+	optionClairTimeout       = "CLAIR_TIMEOUT"
+	optionDockerTimeout      = "DOCKER_TIMEOUT"
+	optionJSONOutput         = "JSON_OUTPUT" // deprecate?
+	optionFormatOutput       = "FORMAT_OUTPUT"
+	optionDockerUser         = "DOCKER_USER"
+	optionDockerPassword     = "DOCKER_PASSWORD"
+	optionDockerToken        = "DOCKER_TOKEN"
+	optionDockerInsecure     = "DOCKER_INSECURE"
+	optionDockerPlatformOS   = "DOCKER_PLATFORM_OS"
+	optionDockerPlatformArch = "DOCKER_PLATFORM_ARCH"
+	optionRegistryInsecure   = "REGISTRY_INSECURE"
+	optionWhiteListFile      = "WHITELIST_FILE"
+	optionIgnoreUnfixed      = "IGNORE_UNFIXED"
 )
 
 var priorities = []string{"Unknown", "Negligible", "Low", "Medium", "High", "Critical", "Defcon1"}
@@ -175,6 +177,8 @@ func newConfig(args []string) (*config, error) {
 			InsecureTLS:      parseBoolOption(optionDockerInsecure),
 			InsecureRegistry: parseBoolOption(optionRegistryInsecure),
 			Timeout:          time.Duration(dockerTimeout) * time.Minute,
+			PlatformOS:       os.Getenv(optionDockerPlatformOS),
+			PlatformArch:     os.Getenv(optionDockerPlatformArch),
 		},
 	}, nil
 }
