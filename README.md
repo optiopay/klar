@@ -47,6 +47,10 @@ need to be booted with `-insecure-tls` for this to work.
 
 * `DOCKER_TIMEOUT` - timeout in minutes when trying to fetch layers from a docker registry
 
+* `DOCKER_PLATFORM_OS` - The operating system of the Docker image. Default is `linux`. This only needs to be set if the image specified references a Docker ManifestList instead of a usual manifest.
+
+* `DOCKER_PLATFORM_ARCH` - The architecture the Docker image is optimized for. Default is `amd64`. This only needs to be set if the image specified references a Docker ManifestList instead of a usual manifest.
+
 * `REGISTRY_INSECURE` - Allow Klar to access insecure registries (HTTP only). Default is `false`.
 
 * `JSON_OUTPUT` - Output JSON, not plain text. Default is `false`.
