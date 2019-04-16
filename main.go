@@ -46,7 +46,7 @@ func main() {
 
 	image, err := docker.NewImage(&conf.DockerConfig)
 	if err != nil {
-		fail("Can't parse qname: %s", err)
+		fail("Can't parse name: %s", err)
 	}
 
 	err = image.Pull()
