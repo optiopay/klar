@@ -98,6 +98,7 @@ func TestNewImage(t *testing.T) {
 
 func TestPullManifestSchemaV1(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/vnd.docker.distribution.manifest.v1+prettyjws")
 		resp, err := ioutil.ReadFile("testdata/registry-response.json")
 		if err != nil {
 			t.Fatalf("Can't load registry test response %s", err.Error())
