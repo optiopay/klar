@@ -340,7 +340,9 @@ func (i *Image) requestToken(resp *http.Response) (string, error) {
 	}
 	tResp, err := i.client.Do(req)
 	if err != nil {
-		io.Copy(ioutil.Discard, tResp.Body)
+		if tResp != nil {
+			io.Copy(ioutil.Discard, tResp.Body)
+		}
 		return "", err
 	}
 
