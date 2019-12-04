@@ -67,7 +67,10 @@ func jsonFormat(conf *config, output jsonOutput) int {
 		output.Vulnerabilities[sev] = store[sev]
 	})
 	enc := json.NewEncoder(os.Stdout)
-	enc.Encode(output)
+	err := enc.Encode(output)
+	if err != nil {
+		panic(err)
+	}
 
 	return vsNumber
 }

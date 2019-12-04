@@ -29,8 +29,8 @@ func TestFilterWhitelist(t *testing.T) {
 	if !reflect.DeepEqual(filtered, expected) {
 		t.Fatalf("Actual filtered vulnerabilities %v did not match expected ones %v.", filtered, expected)
 	}
-
 }
+
 func mockVulnerability(name string) *clair.Vulnerability {
-	return &clair.Vulnerability{name, "", "", "", "", nil, "", nil, "", ""}
+	return new(clair.Vulnerability)
 }

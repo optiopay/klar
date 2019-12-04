@@ -15,13 +15,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-//Used to represent the structure of the whitelist YAML file
+// Used to represent the structure of the whitelist YAML file
 type vulnerabilitiesWhitelistYAML struct {
 	General []string
 	Images  map[string][]string
 }
 
-//Map structure used for ease of searching for whitelisted vulnerabilites
+// Map structure used for ease of searching for whitelisted vulnerabilities
 type vulnerabilitiesWhitelist struct {
 	General map[string]bool            //key: CVE and value: true
 	Images  map[string]map[string]bool //key: image name and value: [key: CVE and value: true]
@@ -98,9 +98,9 @@ func parseFormatTypes() (string, error) {
 	if formatOutputEnv != "" {
 		output := strings.ToLower(formatOutputEnv)
 		correct := false
-		for _, stlye := range formatTypes {
-			if stlye == output {
-				formatStyle = stlye
+		for _, style := range formatTypes {
+			if style == output {
+				formatStyle = style
 				correct = true
 				break
 			}
