@@ -27,7 +27,7 @@ func TestFilterWhitelist(t *testing.T) {
 
 	filtered := filterWhitelist(whitelist, vs, image)
 	if !reflect.DeepEqual(filtered, expected) {
-		t.Fatalf("Actual filtered vulnerabilities %s did not match expected ones %s.", filtered, expected)
+		t.Fatalf("Actual filtered vulnerabilities %v did not match expected ones %v.", filtered, expected)
 	}
 
 }
