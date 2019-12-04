@@ -1,4 +1,4 @@
-module github.com/optiopay/klar
+module github.com/optiopay/klar/v3
 
 go 1.13
 

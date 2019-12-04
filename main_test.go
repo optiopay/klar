@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/optiopay/klar/clair"
+	"github.com/optiopay/klar/v3/clair"
 )
 
 func TestFilterWhitelist(t *testing.T) {
