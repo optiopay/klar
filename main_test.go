@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/optiopay/klar/clair"
+	"github.com/optiopay/klar/v3/clair"
 )
 
 func TestFilterWhitelist(t *testing.T) {
@@ -27,10 +27,10 @@ func TestFilterWhitelist(t *testing.T) {
 
 	filtered := filterWhitelist(whitelist, vs, image)
 	if !reflect.DeepEqual(filtered, expected) {
-		t.Fatalf("Actual filtered vulnerabilities %s did not match expected ones %s.", filtered, expected)
+		t.Fatalf("Actual filtered vulnerabilities %v did not match expected ones %v.", filtered, expected)
 	}
-
 }
+
 func mockVulnerability(name string) *clair.Vulnerability {
-	return &clair.Vulnerability{name, "", "", "", "", nil, "", nil, "", ""}
+	return new(clair.Vulnerability)
 }

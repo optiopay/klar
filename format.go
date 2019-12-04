@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/olekukonko/tablewriter"
-	"github.com/optiopay/klar/clair"
+	"github.com/optiopay/klar/v3/clair"
 )
 
 var SeverityStyle = map[string]string{
@@ -67,7 +67,10 @@ func jsonFormat(conf *config, output jsonOutput) int {
 		output.Vulnerabilities[sev] = store[sev]
 	})
 	enc := json.NewEncoder(os.Stdout)
-	enc.Encode(output)
+	err := enc.Encode(output)
+	if err != nil {
+		panic(err)
+	}
 
 	return vsNumber
 }

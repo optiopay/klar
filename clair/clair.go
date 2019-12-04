@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/optiopay/klar/docker"
+	"github.com/optiopay/klar/v3/docker"
 )
 
 const EMPTY_LAYER_BLOB_SUM = "sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4"

@@ -972,10 +972,10 @@ func (s *Server) processStreamingRPC(t transport.ServerTransport, stream *transp
 		}()
 	}
 	ss := &serverStream{
-		t:                     t,
-		s:                     stream,
-		p:                     &parser{r: stream},
-		codec:                 s.opts.codec,
+		t:     t,
+		s:     stream,
+		p:     &parser{r: stream},
+		codec: s.opts.codec,
 		maxReceiveMessageSize: s.opts.maxReceiveMessageSize,
 		maxSendMessageSize:    s.opts.maxSendMessageSize,
 		trInfo:                trInfo,
