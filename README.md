@@ -61,6 +61,8 @@ need to be booted with `-insecure-tls` for this to work.
 
 * `IGNORE_UNFIXED` - Do not count vulnerabilities without a fix towards the threshold
 
+* `IGNORE_UNDERLYING` - Do not count vulnerabilities if they don't appear in the topmost layer.
+
 Usage:
 
     CLAIR_ADDR=localhost CLAIR_OUTPUT=High CLAIR_THRESHOLD=10 DOCKER_USER=docker DOCKER_PASSWORD=secret klar postgres:9.5.1
