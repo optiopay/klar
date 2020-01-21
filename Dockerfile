@@ -1,6 +1,6 @@
-FROM golang:1.8-alpine as builder
+FROM golang as builder
 
-RUN apk --update add git;
+#RUN apk --update add git;
 RUN go get -d github.com/optiopay/klar
 RUN go build ./src/github.com/optiopay/klar
 
