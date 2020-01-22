@@ -7,6 +7,7 @@ RUN go build ./src/github.com/optiopay/klar
 FROM debian
 
 #RUN apk add --no-cache ca-certificates
+RUN apt-get update;apt-get -y install ca-certificates;apt-get clean
 COPY --from=builder /go/klar /klar
 
 ENTRYPOINT ["/klar"]
