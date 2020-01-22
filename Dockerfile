@@ -4,9 +4,9 @@ FROM golang as builder
 RUN go get -d github.com/optiopay/klar
 RUN go build ./src/github.com/optiopay/klar
 
-FROM alpine:3.8
+FROM debian
 
-RUN apk add --no-cache ca-certificates
+#RUN apk add --no-cache ca-certificates
 COPY --from=builder /go/klar /klar
 
 ENTRYPOINT ["/klar"]
