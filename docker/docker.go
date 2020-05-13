@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -324,13 +325,13 @@ func (i *Image) requestToken(resp *http.Response) (string, error) {
 		return "", fmt.Errorf("Can't parse Www-Authenticate: %s", authHeader)
 	}
 	realm, service, scope := parts[1], parts[2], parts[3]
-	var url string
+	var authURL string
 	if i.user != "" {
-		url = fmt.Sprintf("%s?service=%s&scope=%s&account=%s", realm, service, scope, i.user)
+		authURL = fmt.Sprintf("%s?service=%s&scope=%s&account=%s", realm, url.QueryEscape(service), scope, i.user)
 	} else {
-		url = fmt.Sprintf("%s?service=%s&scope=%s", realm, service, scope)
+		authURL = fmt.Sprintf("%s?service=%s&scope=%s", realm, service, scope)
 	}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", authURL, nil)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Can't create a request")
 		return "", err
