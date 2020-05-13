@@ -329,7 +329,7 @@ func (i *Image) requestToken(resp *http.Response) (string, error) {
 	if i.user != "" {
 		authURL = fmt.Sprintf("%s?service=%s&scope=%s&account=%s", realm, url.QueryEscape(service), scope, i.user)
 	} else {
-		authURL = fmt.Sprintf("%s?service=%s&scope=%s", realm, service, scope)
+		authURL = fmt.Sprintf("%s?service=%s&scope=%s", realm, url.QueryEscape(service), scope)
 	}
 	req, err := http.NewRequest("GET", authURL, nil)
 	if err != nil {
