@@ -15,14 +15,14 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-//Used to represent the structure of the whitelist YAML file
-type vulnerabilitiesWhitelistYAML struct {
+//Used to represent the structure of the allowlisted YAML file
+type vulnerabilitiesAllowlistYAML struct {
 	General []string
 	Images  map[string][]string
 }
 
-//Map structure used for ease of searching for whitelisted vulnerabilites
-type vulnerabilitiesWhitelist struct {
+//Map structure used for ease of searching for allowlisted vulnerabilites
+type vulnerabilitiesAllowlist struct {
 	General map[string]bool            //key: CVE and value: true
 	Images  map[string]map[string]bool //key: image name and value: [key: CVE and value: true]
 }
@@ -43,7 +43,7 @@ const (
 	optionDockerPlatformOS   = "DOCKER_PLATFORM_OS"
 	optionDockerPlatformArch = "DOCKER_PLATFORM_ARCH"
 	optionRegistryInsecure   = "REGISTRY_INSECURE"
-	optionWhiteListFile      = "WHITELIST_FILE"
+	optionAllowListFile      = "ALLOWLIST_FILE"
 	optionIgnoreUnfixed      = "IGNORE_UNFIXED"
 )
 
@@ -126,7 +126,7 @@ type config struct {
 	FormatStyle   string
 	ClairTimeout  time.Duration
 	DockerConfig  docker.Config
-	WhiteListFile string
+	AllowListFile string
 	IgnoreUnfixed bool
 }
 
@@ -168,7 +168,7 @@ func newConfig(args []string) (*config, error) {
 		FormatStyle:   formatStyle,
 		IgnoreUnfixed: parseBoolOption(optionIgnoreUnfixed),
 		ClairTimeout:  time.Duration(clairTimeout) * time.Minute,
-		WhiteListFile: os.Getenv(optionWhiteListFile),
+		AllowListFile: os.Getenv(optionAllowListFile),
 		DockerConfig: docker.Config{
 			ImageName:        args[1],
 			User:             os.Getenv(optionDockerUser),
@@ -183,35 +183,35 @@ func newConfig(args []string) (*config, error) {
 	}, nil
 }
 
-//Parse the whitelist file
-func parseWhitelistFile(whitelistFile string) (*vulnerabilitiesWhitelist, error) {
-	whitelistYAML := vulnerabilitiesWhitelistYAML{}
-	whitelist := vulnerabilitiesWhitelist{}
+//Parse the allowlist file
+func parseAllowlistFile(allowlistFile string) (*vulnerabilitiesAllowlist, error) {
+	allowlistYAML := vulnerabilitiesAllowlistYAML{}
+	allowlist := vulnerabilitiesAllowlist{}
 
-	//read the whitelist file
-	whitelistBytes, err := ioutil.ReadFile(whitelistFile)
+	//read the allowlist file
+	allowlistBytes, err := ioutil.ReadFile(allowlistFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not read file %v", err)
 	}
-	if err = yaml.Unmarshal(whitelistBytes, &whitelistYAML); err != nil {
+	if err = yaml.Unmarshal(allowlistBytes, &allowlistYAML); err != nil {
 		return nil, fmt.Errorf("could not unmarshal %v", err)
 	}
 
-	//Initialize the whitelist maps
-	whitelist.General = make(map[string]bool)
-	whitelist.Images = make(map[string]map[string]bool)
+	//Initialize the allowlist maps
+	allowlist.General = make(map[string]bool)
+	allowlist.Images = make(map[string]map[string]bool)
 
 	//Populate the maps
-	for _, cve := range whitelistYAML.General {
-		whitelist.General[cve] = true
+	for _, cve := range allowlistYAML.General {
+		allowlist.General[cve] = true
 	}
 
-	for image, cveList := range whitelistYAML.Images {
-		whitelist.Images[image] = make(map[string]bool)
+	for image, cveList := range allowlistYAML.Images {
+		allowlist.Images[image] = make(map[string]bool)
 		for _, cve := range cveList {
-			whitelist.Images[image][cve] = true
+			allowlist.Images[image][cve] = true
 		}
 	}
 
-	return &whitelist, nil
+	return &allowlist, nil
 }
