@@ -22,7 +22,7 @@ make sure your Go binary folder is in your `PATH` (e.g. `export PATH=$PATH:/usr/
 
 ## Usage
 
-Klar process returns if `0` if the number of detected high severity vulnerabilities in an image is less than or equal to a threshold (see below) and `1` if there were more. It will return `2` if an error has prevented the image from being analyzed.
+Klar process returns `0` if the number of detected high severity vulnerabilities in an image is less than or equal to a threshold (see below) and `1` if there were more. It will return `2` if an error has prevented the image from being analyzed.
 
 Klar can be configured via the following environment variables:
 
