@@ -351,15 +351,20 @@ func (i *Image) requestToken(resp *http.Response) (string, error) {
 		io.Copy(ioutil.Discard, tResp.Body)
 		return "", fmt.Errorf("Token request returned %d", tResp.StatusCode)
 	}
-	var tokenEnv struct {
-		Token string
-	}
 
+	var tokenEnv map[string]interface{}
 	if err = json.NewDecoder(tResp.Body).Decode(&tokenEnv); err != nil {
 		fmt.Fprintln(os.Stderr, "Token response decode error")
 		return "", err
 	}
-	return fmt.Sprintf("Bearer %s", tokenEnv.Token), nil
+	if token, ok := tokenEnv["token"]; ok {
+		return fmt.Sprintf("Bearer %s", token), nil
+	}
+	if token, ok := tokenEnv["access_token"]; ok {
+		return fmt.Sprintf("Bearer %s", token), nil
+	}
+	fmt.Fprintln(os.Stderr, "Token response decode error, no token or access_token found")
+	return "", err
 }
 
 func (i *Image) pullReq() (*http.Response, error) {
