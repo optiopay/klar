@@ -138,14 +138,20 @@ func filterWhitelist(whitelist *vulnerabilitiesWhitelist, vs []*clair.Vulnerabil
 	filteredVs := make([]*clair.Vulnerability, 0, len(vs))
 
 	for _, v := range vs {
-		if _, exists := generalWhitelist[v.Name]; !exists {
-			if _, exists := imageWhitelist[imageName][v.Name]; !exists {
-				if _, exists := featureWhitelist[v.FeatureName][v.Name]; !exists {
-					//vulnerability is not in the image whitelist, so add it to the list to return
-					filteredVs = append(filteredVs, v)
-				}
-			}
+		if _, exists := generalWhitelist[v.Name]; exists {
+			//vulnerability is whitelisted generally
+			continue
 		}
+		if _, exists := imageWhitelist[imageName][v.Name]; exists {
+			//vulnerability is whitelisted for this imageName
+			continue
+		}
+		if _, exists := featureWhitelist[v.FeatureName][v.Name]; exists {
+			//vulnerability is whitelisted for this feature name
+			continue
+		}
+		//vulnerability has not been whitelisted, so add it to the list to return
+		filteredVs = append(filteredVs, v)
 	}
 
 	return filteredVs
