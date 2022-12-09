@@ -9,3 +9,6 @@ images:
   fluent/fluent-bit:
     - CVE-2017-14062
     - CVE-2018-6485
+features:
+  "db5.3":
+    - CVE-2019-8457

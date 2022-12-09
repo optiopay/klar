@@ -17,14 +17,16 @@ import (
 
 //Used to represent the structure of the whitelist YAML file
 type vulnerabilitiesWhitelistYAML struct {
-	General []string
-	Images  map[string][]string
+	General  []string
+	Images   map[string][]string
+	Features map[string][]string
 }
 
 //Map structure used for ease of searching for whitelisted vulnerabilites
 type vulnerabilitiesWhitelist struct {
-	General map[string]bool            //key: CVE and value: true
-	Images  map[string]map[string]bool //key: image name and value: [key: CVE and value: true]
+	General  map[string]bool            //key: CVE and value: true
+	Images   map[string]map[string]bool //key: image name and value: [key: CVE and value: true]
+	Features map[string]map[string]bool //key: feature name and value: [key: CVE and value: true]
 }
 
 const (
@@ -200,6 +202,7 @@ func parseWhitelistFile(whitelistFile string) (*vulnerabilitiesWhitelist, error)
 	//Initialize the whitelist maps
 	whitelist.General = make(map[string]bool)
 	whitelist.Images = make(map[string]map[string]bool)
+	whitelist.Features = make(map[string]map[string]bool)
 
 	//Populate the maps
 	for _, cve := range whitelistYAML.General {
@@ -210,6 +213,13 @@ func parseWhitelistFile(whitelistFile string) (*vulnerabilitiesWhitelist, error)
 		whitelist.Images[image] = make(map[string]bool)
 		for _, cve := range cveList {
 			whitelist.Images[image][cve] = true
+		}
+	}
+
+	for feature, cveList := range whitelistYAML.Features {
+		whitelist.Features[feature] = make(map[string]bool)
+		for _, cve := range cveList {
+			whitelist.Images[feature][cve] = true
 		}
 	}
 
