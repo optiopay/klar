@@ -45,6 +45,7 @@ const (
 	optionRegistryInsecure   = "REGISTRY_INSECURE"
 	optionWhiteListFile      = "WHITELIST_FILE"
 	optionIgnoreUnfixed      = "IGNORE_UNFIXED"
+	optionIgnoreUnderlying   = "IGNORE_UNDERLYING"
 )
 
 var priorities = []string{"Unknown", "Negligible", "Low", "Medium", "High", "Critical", "Defcon1"}
@@ -119,15 +120,16 @@ type jsonOutput struct {
 }
 
 type config struct {
-	ClairAddr     string
-	ClairOutput   string
-	Threshold     int
-	JSONOutput    bool
-	FormatStyle   string
-	ClairTimeout  time.Duration
-	DockerConfig  docker.Config
-	WhiteListFile string
-	IgnoreUnfixed bool
+	ClairAddr        string
+	ClairOutput      string
+	Threshold        int
+	JSONOutput       bool
+	FormatStyle      string
+	ClairTimeout     time.Duration
+	DockerConfig     docker.Config
+	WhiteListFile    string
+	IgnoreUnfixed    bool
+	IgnoreUnderlying bool
 }
 
 func newConfig(args []string) (*config, error) {
@@ -161,14 +163,15 @@ func newConfig(args []string) (*config, error) {
 	}
 
 	return &config{
-		ClairAddr:     clairAddr,
-		ClairOutput:   clairOutput,
-		Threshold:     parseIntOption(optionClairThreshold),
-		JSONOutput:    formatStyle == "json",
-		FormatStyle:   formatStyle,
-		IgnoreUnfixed: parseBoolOption(optionIgnoreUnfixed),
-		ClairTimeout:  time.Duration(clairTimeout) * time.Minute,
-		WhiteListFile: os.Getenv(optionWhiteListFile),
+		ClairAddr:        clairAddr,
+		ClairOutput:      clairOutput,
+		Threshold:        parseIntOption(optionClairThreshold),
+		JSONOutput:       formatStyle == "json",
+		FormatStyle:      formatStyle,
+		IgnoreUnfixed:    parseBoolOption(optionIgnoreUnfixed),
+		IgnoreUnderlying: parseBoolOption(optionIgnoreUnderlying),
+		ClairTimeout:     time.Duration(clairTimeout) * time.Minute,
+		WhiteListFile:    os.Getenv(optionWhiteListFile),
 		DockerConfig: docker.Config{
 			ImageName:        args[1],
 			User:             os.Getenv(optionDockerUser),

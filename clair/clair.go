@@ -105,9 +105,14 @@ func filterEmptyLayers(fsLayers []docker.FsLayer) (filteredLayers []docker.FsLay
 	return
 }
 
+func lastLayer(fsLayers []docker.FsLayer) (lastLayer []docker.FsLayer) {
+	lastLayer = append(lastLayer, fsLayers[len(fsLayers)-1])
+	return
+}
+
 // Analyse sent each layer from Docker image to Clair and returns
 // a list of found vulnerabilities
-func (c *Clair) Analyse(image *docker.Image) ([]*Vulnerability, error) {
+func (c *Clair) Analyse(image *docker.Image, ignoreUnderlying bool) ([]*Vulnerability, error) {
 	// Filter the empty layers in image
 	image.FsLayers = filterEmptyLayers(image.FsLayers)
 	layerLength := len(image.FsLayers)
@@ -119,6 +124,10 @@ func (c *Clair) Analyse(image *docker.Image) ([]*Vulnerability, error) {
 
 	if err := c.api.Push(image); err != nil {
 		return nil, fmt.Errorf("push image %s/%s:%s to Clair failed: %s\n", image.Registry, image.Name, image.Tag, err.Error())
+	}
+	if ignoreUnderlying {
+		//we only analyse the last layer
+		image.FsLayers = lastLayer(image.FsLayers)
 	}
 	vs, err := c.api.Analyze(image)
 	if err != nil {

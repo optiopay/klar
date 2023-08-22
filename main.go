@@ -71,7 +71,7 @@ func main() {
 	var vs []*clair.Vulnerability
 	for _, ver := range []int{1, 3} {
 		c := clair.NewClair(conf.ClairAddr, ver, conf.ClairTimeout)
-		vs, err = c.Analyse(image)
+		vs, err = c.Analyse(image, conf.IgnoreUnderlying)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to analyze using API v%d: %s\n", ver, err)
 		} else {
