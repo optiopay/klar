@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/coreos/clair/api/v3/clairpb"
 	"github.com/optiopay/klar/docker"
+	"github.com/quay/clair/v3/api/v3/clairpb"
 	"google.golang.org/grpc"
 )
 
@@ -70,6 +70,7 @@ func clairServerhandler(t *testing.T) http.HandlerFunc {
 		if err != nil {
 			t.Fatalf("Can't load clair test response %s", err.Error())
 		}
+		//fmt.Println(string(resp))
 		fmt.Fprintln(w, string(resp))
 	})
 }
@@ -130,23 +131,25 @@ func (s *gServer) GetAncestry(ctx context.Context, in *clairpb.GetAncestryReques
 	return &clairpb.GetAncestryResponse{
 		Ancestry: &clairpb.GetAncestryResponse_Ancestry{
 			Name: in.GetAncestryName(),
-			Features: []*clairpb.Feature{
-				{
-					Name:          "coreutils",
-					NamespaceName: "debian:8",
-					Version:       "8.23-4",
-					Vulnerabilities: []*clairpb.Vulnerability{
-						{
+			Layers: []*clairpb.GetAncestryResponse_AncestryLayer{{
+				DetectedFeatures: []*clairpb.Feature{
+					{
+						Name:    "coreutils",
+						Version: "8.23-4",
+						Vulnerabilities: []*clairpb.Vulnerability{
+							{
 
-							Name:          "CVE-2014-9471",
-							NamespaceName: "debian:8",
-							Description:   "The parse_datetime function in GNU coreutils ...",
-							Link:          "https://security-tracker.debian.org/tracker/CVE-2014-9471",
-							Severity:      "Low",
-							FixedBy:       "9.23-5",
+								Name:          "CVE-2014-9471",
+								NamespaceName: "debian:8",
+								Description:   "The parse_datetime function in GNU coreutils ...",
+								Link:          "https://security-tracker.debian.org/tracker/CVE-2014-9471",
+								Severity:      "Low",
+								FixedBy:       "9.23-5",
+							},
 						},
 					},
 				},
+			},
 			},
 		},
 	}, nil
