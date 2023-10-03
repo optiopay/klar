@@ -8,9 +8,9 @@ import (
 	"github.com/optiopay/klar/clair"
 )
 
-func TestFilterWhitelist(t *testing.T) {
+func TestFilterAllowlist(t *testing.T) {
 	image := "fluent/fluent-bit"
-	whitelist := &vulnerabilitiesWhitelist{
+	allowlist := &vulnerabilitiesAllowlist{
 		map[string]bool{"CVE-3": true},
 		map[string]map[string]bool{image: {"CVE-4": true}},
 	}
@@ -25,7 +25,7 @@ func TestFilterWhitelist(t *testing.T) {
 		expected[i] = mockVulnerability(fmt.Sprintf("CVE-%d", i))
 	}
 
-	filtered := filterWhitelist(whitelist, vs, image)
+	filtered := filterAllowlist(allowlist, vs, image)
 	if !reflect.DeepEqual(filtered, expected) {
 		t.Fatalf("Actual filtered vulnerabilities %s did not match expected ones %s.", filtered, expected)
 	}

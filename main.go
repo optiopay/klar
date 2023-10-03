@@ -29,18 +29,18 @@ func main() {
 		fmt.Fprintf(os.Stderr, "clair timeout %s\n", conf.ClairTimeout)
 		fmt.Fprintf(os.Stderr, "docker timeout: %s\n", conf.DockerConfig.Timeout)
 	}
-	whitelist := &vulnerabilitiesWhitelist{}
-	if conf.WhiteListFile != "" {
+	allowlist := &vulnerabilitiesAllowlist{}
+	if conf.AllowListFile != "" {
 		if !conf.JSONOutput {
-			fmt.Fprintf(os.Stderr, "whitelist file: %s\n", conf.WhiteListFile)
+			fmt.Fprintf(os.Stderr, "allowlist file: %s\n", conf.AllowListFile)
 		}
-		whitelist, err = parseWhitelistFile(conf.WhiteListFile)
+		allowlist, err = parseAllowlistFile(conf.AllowListFile)
 		if err != nil {
-			fail("Could not parse whitelist file: %s", err)
+			fail("Could not parse allowlist file: %s", err)
 		}
 	} else {
 		if !conf.JSONOutput {
-			fmt.Fprintf(os.Stderr, "no whitelist file\n")
+			fmt.Fprintf(os.Stderr, "no allowlist file\n")
 		}
 	}
 
@@ -88,16 +88,16 @@ func main() {
 	vsNumber := 0
 
 	numVulnerabilites := len(vs)
-	vs = filterWhitelist(whitelist, vs, image.Name)
-	numVulnerabilitiesAfterWhitelist := len(vs)
+	vs = filterAllowlist(allowlist, vs, image.Name)
+	numVulnerabilitiesAfterAllowlist := len(vs)
 	groupBySeverity(vs)
 
 	if conf.JSONOutput {
 		vsNumber = jsonFormat(conf, output)
 	} else {
-		if numVulnerabilitiesAfterWhitelist < numVulnerabilites {
-			//display how many vulnerabilities were whitelisted
-			fmt.Printf("Whitelisted %d vulnerabilities\n", numVulnerabilites-numVulnerabilitiesAfterWhitelist)
+		if numVulnerabilitiesAfterAllowlist < numVulnerabilites {
+			//display how many vulnerabilities were allowlisted
+			fmt.Printf("Allowlisted %d vulnerabilities\n", numVulnerabilites-numVulnerabilitiesAfterAllowlist)
 		}
 		fmt.Printf("Found %d vulnerabilities\n", len(vs))
 		switch style := conf.FormatStyle; style {
@@ -129,17 +129,17 @@ func vulnsBy(sev string, store map[string][]*clair.Vulnerability) []*clair.Vulne
 	return items
 }
 
-//Filter out whitelisted vulnerabilites
-func filterWhitelist(whitelist *vulnerabilitiesWhitelist, vs []*clair.Vulnerability, imageName string) []*clair.Vulnerability {
-	generalWhitelist := whitelist.General
-	imageWhitelist := whitelist.Images
+//Filter out allowlisted vulnerabilites
+func filterAllowlist(allowlist *vulnerabilitiesAllowlist, vs []*clair.Vulnerability, imageName string) []*clair.Vulnerability {
+	generalAllowlist := allowlist.General
+	imageAllowlist := allowlist.Images
 
 	filteredVs := make([]*clair.Vulnerability, 0, len(vs))
 
 	for _, v := range vs {
-		if _, exists := generalWhitelist[v.Name]; !exists {
-			if _, exists := imageWhitelist[imageName][v.Name]; !exists {
-				//vulnerability is not in the image whitelist, so add it to the list to return
+		if _, exists := generalAllowlist[v.Name]; !exists {
+			if _, exists := imageAllowlist[imageName][v.Name]; !exists {
+				//vulnerability is not in the image allowlist, so add it to the list to return
 				filteredVs = append(filteredVs, v)
 			}
 		}
