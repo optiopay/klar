@@ -129,7 +129,7 @@ func vulnsBy(sev string, store map[string][]*clair.Vulnerability) []*clair.Vulne
 	return items
 }
 
-//Filter out whitelisted vulnerabilites
+//Filter out whitelisted vulnerabilities
 func filterWhitelist(whitelist *vulnerabilitiesWhitelist, vs []*clair.Vulnerability, imageName string) []*clair.Vulnerability {
 	generalWhitelist := whitelist.General
 	imageWhitelist := whitelist.Images

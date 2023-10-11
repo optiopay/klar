@@ -112,7 +112,7 @@ func (c *Clair) Analyse(image *docker.Image) ([]*Vulnerability, error) {
 	image.FsLayers = filterEmptyLayers(image.FsLayers)
 	layerLength := len(image.FsLayers)
 	if layerLength == 0 {
-		fmt.Fprintf(os.Stderr, "no need to analyse image %s/%s:%s as there is no non-emtpy layer\n",
+		fmt.Fprintf(os.Stderr, "no need to analyse image %s/%s:%s as there is no non-empty layer\n",
 			image.Registry, image.Name, image.Tag)
 		return nil, nil
 	}
