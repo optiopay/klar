@@ -1,7 +1,7 @@
 # Klar
 Integration of Clair and Docker Registry (supports both Clair API v1 and v3)
 
-Klar is a simple tool to analyze images stored in a private or public  Docker registry for security vulnerabilities using Clair https://github.com/coreos/clair. Klar is designed to be used as an integration tool so it relies on enviroment variables. It's a single binary which requires no dependencies.
+Klar is a simple tool to analyze images stored in a private or public  Docker registry for security vulnerabilities using Clair https://github.com/coreos/clair. Klar is designed to be used as an integration tool so it relies on environment variables. It's a single binary which requires no dependencies.
 
 Klar serves as a client which coordinates the image checks between the Docker registry and Clair.
 
@@ -96,7 +96,7 @@ Then run
     docker run --env-file=my-klar.env klar postgres:9.5.1
 
 ## Amazon ECR support
-There is no permanent username/password for Amazon ECR, the credentials must be retrived using `aws ecr get-login` and they are valid for 12 hours. Here is a sample script which may be used to provide Klar with ECR credentials:
+There is no permanent username/password for Amazon ECR, the credentials must be retrieved using `aws ecr get-login` and they are valid for 12 hours. Here is a sample script which may be used to provide Klar with ECR credentials:
 
     DOCKER_LOGIN=`aws ecr get-login --no-include-email`
     PASSWORD=`echo $DOCKER_LOGIN | cut -d' ' -f6`
