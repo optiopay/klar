@@ -96,12 +96,19 @@ Then run
     docker run --env-file=my-klar.env klar postgres:9.5.1
 
 ## Amazon ECR support
-There is no permanent username/password for Amazon ECR, the credentials must be retrived using `aws ecr get-login` and they are valid for 12 hours. Here is a sample script which may be used to provide Klar with ECR credentials:
+There is no permanent username/password for Amazon ECR, the credentials must be retrived using `aws ecr get-login` or `aws ecr get-login-password`, and they are valid for 12 hours. Here is a sample script which may be used to provide Klar with ECR credentials:
+
+### AWS CLI Version 1
 
     DOCKER_LOGIN=`aws ecr get-login --no-include-email`
     PASSWORD=`echo $DOCKER_LOGIN | cut -d' ' -f6`
     REGISTRY=`echo $DOCKER_LOGIN | cut -d' ' -f7 | sed "s/https:\/\///"`
     DOCKER_USER=AWS DOCKER_PASSWORD=${PASSWORD} ./klar ${REGISTRY}/my-image
+
+### AWS CLI Version 2
+
+    REPOSITORY_URI=`aws ecr describe-repositories --query "repositories[?repositoryName=='my-image'].repositoryUri | [0]"`
+    DOCKER_USER=AWS DOCKER_PASSWORD=`aws ecr get-login-password` ./klar ${REPOSITORY_URI}
 
 ## Google GCR support
 For authentication against GCR (Google Cloud Registry), the easiest way is to use the [application default credentials](https://developers.google.com/identity/protocols/application-default-credentials). These only work when running Klar from GCP. The only requirement is the Google Cloud SDK.
